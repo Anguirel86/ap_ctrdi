@@ -120,12 +120,18 @@ def write_list_control(flag: str, spec: argumenttypes.MultipleDiscreteSelection)
         name = spec.str_from_choice_fn(elem)  # pyright: ignore[reportOptionalCall]
         default_list.append(name)
 
+    valid_keys = []
+    for key in spec.choices:
+        valid_keys.append(spec.str_from_choice_fn(key))
+
     default_list_as_str: str = f"[{', '.join(repr(i) for i in default_list)}]"
+    valid_keys_as_str: str = f"{{{', '.join(repr(i) for i in valid_keys)}}}"
 
     control = f'''
 class {get_class_name(flag)}(OptionList):
     """{spec.help_text}"""
     display_name = "{get_display_name(flag)}"
+    valid_keys = {valid_keys_as_str}
     default = {default_list_as_str}\n\n'''
 
     option_class_buf.write(control)
@@ -152,10 +158,10 @@ def parse_option_group(group_name: str, arg_spec: dict):
             # Recursive arg specs
             parse_option_group(group_name, spec)
         else:
-            if not isinstance(spec, argumenttypes.MultipleDiscreteSelection):
-                dataclass_buf.write(f"    {flag}: {get_class_name(flag)}\n")
-                option_groups_buf.write(
-                    f"            {get_class_name(flag)},\n")
+            #if not isinstance(spec, argumenttypes.MultipleDiscreteSelection):
+            dataclass_buf.write(f"    {flag}: {get_class_name(flag)}\n")
+            option_groups_buf.write(
+                f"            {get_class_name(flag)},\n")
 
         if isinstance(spec, argumenttypes.FlagArg):
             write_toggle_control(flag, spec)

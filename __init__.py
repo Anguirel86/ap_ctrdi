@@ -27,7 +27,7 @@ from ctrando.objectives import objectivetypes as objty
 import settings
 import worlds
 from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region, Tutorial
-from Options import Choice, Range, Toggle
+from Options import Choice, OptionList, Range, Toggle
 from Utils import read_snes_rom
 from worlds.AutoWorld import WebWorld, World
 
@@ -467,6 +467,9 @@ class CTRDIWorld(World):
                         value = value.value == 1
 
                     if isinstance(value, Range):
+                        value = value.value
+
+                    if isinstance(value, OptionList):
                         value = value.value
 
                     # Skip string fields with no data
