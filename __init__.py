@@ -35,7 +35,7 @@ from worlds.AutoWorld import WebWorld, World
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
-#  - Add Options handing
+#  - Handle tech level rewards
 #  - Create tutorial docs
 #  - General organization/cleanup pass, add helper classes, etc
 
@@ -48,7 +48,7 @@ CTUSA_MD5_HASH = "a2bc447961e52fd2227baed164f729dc"
 
 class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):
     hash = CTUSA_MD5_HASH
-    game = "Chrono Trigger: Rando-Dalton Imperial"
+    game = "Chrono Trigger Rando-Dalton Imperial"
     patch_file_ending = ".apctrdi"
 
     @classmethod
@@ -305,6 +305,19 @@ class CTRDIWorld(World):
         Create corresponding locations for each RDI location and
         attach them to the appropriate regions.
         """
+        progression_spots = list(self.rdi_settings.logic_options.forced_spots) + \
+                            list(self.rdi_settings.logic_options.incentive_spots)
+        excluded_spots = self.rdi_settings.logic_options.excluded_spots
+
+        def non_progression(item):
+            return item.classification in [ItemClassification.filler,
+                                           ItemClassification.useful,
+                                           ItemClassification.trap]
+
+        def junk_only(item):
+            return item.classification in [ItemClassification.filler,
+                                           ItemClassification.trap]
+
         for region_data in region_dict.values():
             if isinstance(region_data.rdi_region, LocRegion):
                 for loc in region_data.rdi_region.reward_spots:
@@ -317,8 +330,23 @@ class CTRDIWorld(World):
 
                         location = Location(
                             self.player, str(loc), self.location_name_to_id[str(loc)], region_data.ap_region)
-                        location.access_rule = lambda state: True
                         region_data.ap_region.locations.append(location)
+                        location.access_rule = lambda state: True
+
+                        if len(progression_spots) > 0:
+                            # If there are no progressio spots then the user wants full
+                            # chronosanity mode minus the excluded spots
+                            # If there are progression spots specified then we need to
+                            # set up the item rules accordingly
+                            if loc not in progression_spots and loc not in excluded_spots:
+                                # limit item classification for non-forced and non-incentive spots
+                                location.item_rule = non_progression
+
+                        if loc in excluded_spots:
+                            # Limit exluded spots to only filler items and traps
+                            # These are usually missable locations so don't put anything good there
+                            location.item_rule = junk_only
+
 
     def _create_region_map(self) -> dict[str, RegionData]:
         """
@@ -468,6 +496,8 @@ class CTRDIWorld(World):
 
                     if isinstance(value, Range):
                         value = value.value
+                        if spec.type_fn is not int:
+                            value = float(value / 100.0)
 
                     if isinstance(value, OptionList):
                         value = value.value
@@ -479,7 +509,7 @@ class CTRDIWorld(World):
                     else:
                         data_dict[flag_name] = value
 
-        # print(data_dict)
+        #print(data_dict)
         #args = tomloptions.toml_data_to_args({})
         args = tomloptions.toml_data_to_args(data_dict)
         self.rdi_settings = randomizer.extract_settings(*args)
