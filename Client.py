@@ -1,7 +1,8 @@
 import logging
 import typing
+from collections import Counter
 from dataclasses import dataclass
-from typing import override
+from typing import Tuple, override
 
 import ctrando.common.memory
 from ctrando.common.ctenums import TreasureID as TID
@@ -9,7 +10,7 @@ from ctrando.common.memory import Flags
 from ctrando.treasures import treasuretypes
 
 from NetUtils import ClientStatus, NetworkItem
-from SNIClient import SNIContext
+from SNIClient import SNIContext, snes_buffered_write, snes_flush_writes, snes_read
 from worlds.AutoSNIClient import SNIClient
 
 snes_logger = logging.getLogger("SNES")
@@ -35,6 +36,13 @@ RECEIVED_ITEM_CNT = 0x7E287C  # TODO: Update this - JoT value
 VICTORY_ADDR = 0x00  # TODO: Get real victory flag ADDR
 VICTORY_FLAG = 0x01  # TODO: Get real victory flag bit
 
+INVENTORY_ITEMS_ADDR = 0x7E2400
+INVENTORY_QTY_ADDR = 0x7E2500
+INVENTORY_DATA_SIZE = 0x200
+
+ITEM_DELIVERY_FLAGS_ADDR = 0  # TODO: Update this - JoT value
+ITEM_AVAILABLE_BIT = 0x01
+GAME_READY_BIT = 0x02
 LOCATION_ADDR = 0xF50100  # Already in SNI address space
 
 # ROM/player/slot validation
@@ -53,6 +61,14 @@ class CheckCounter:
     """
     address: int
     count: int
+
+@dataclass
+class InventoryData:
+    """
+    Data class to store item ID and inventory index for items to be delivered.
+    """
+    item_id: int
+    idx: int
 
 
 """
@@ -195,7 +211,7 @@ class CTRDIClient(SNIClient):
         self._loc_name_to_id = {str(loc): ITEM_ID_BASE + loc for loc in TID}
 
     @staticmethod
-    def _convert_to_sni_addressing(addr: int) -> int:
+    def _to_sni(addr: int) -> int:
         """
         Convert a SNES address to the SNI address space.
         """
@@ -225,9 +241,11 @@ class CTRDIClient(SNIClient):
         if isinstance(check_data, Flags):
             # Standard memory flag
             return event_data[offset] & check_data.bit
-        else:
+        elif isinstance(check_data, CheckCounter):
             # Counter type check
             return event_data[offset] >= check_data.count
+        else:
+            raise Exception(f"Unknown check type for {check_data!s}")
 
     def _can_track(
             self,
@@ -285,38 +303,154 @@ class CTRDIClient(SNIClient):
 
         return new_locations
 
+    @staticmethod
+    def _get_item_counts_to_deliver(ctx: SNIContext, start_idx: int) -> Counter[int]:
+        """
+        Get a Counter containing the IDs of items to be delivered.
+        """
+        return Counter([x.item - ITEM_ID_BASE for x in ctx.items_received[start_idx:]])
+
     @classmethod
-    async def _deliver_next_item(cls, ctx: SNIContext):
+    async def _items_awaiting_delivery(cls, ctx: SNIContext) -> tuple[bool, int]:
         """
-        Deliver the next available item to the player if there are
-        any items waiting to be delivered.
+        Fetch the number of items that have already been delivered.
+        This is stored in the game's memory.
         """
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
-
-        item_buf = await snes_read(
-            ctx, cls._convert_to_sni_addressing(RECEIVED_ITEM_ADDR), 1)
-
         item_cnt_buf = await snes_read(
-            ctx, cls._convert_to_sni_addressing(RECEIVED_ITEM_CNT), 2)
-
-        if item_cnt_buf is None or \
-                item_buf is None or \
-                item_buf[0] != 0:
-            # Read failed or an item is already in the delivery buffer
-            return
+            ctx, cls._to_sni(RECEIVED_ITEM_CNT), 2)
+        if item_cnt_buf is None:
+            # Read failed
+            return False, 0
 
         item_cnt = int.from_bytes(item_cnt_buf, "little")
-        if len(ctx.items_received) > item_cnt:
-            item = ctx.items_received[item_cnt]
-            in_game_id = item.item - ITEM_ID_BASE
+        num_items_received = len(ctx.items_received)
+        if num_items_received <= item_cnt:
+            # No items to deliver
+            return False, item_cnt - num_items_received
 
-            if in_game_id <= MAX_IN_GAME_ITEM_ID:
-                snes_buffered_write(
-                    ctx,
-                    cls._convert_to_sni_addressing(RECEIVED_ITEM_ADDR),
-                    bytes(in_game_id))
+        return True, item_cnt
 
-                await snes_flush_writes(ctx)
+    @classmethod
+    async def _deliver_items(cls, ctx:SNIContext, start_idx: int) -> bool:
+        """
+        Handle the actual item delivery.
+
+        Write items directly into player inventory.
+        TODO: Character and tech level rewards
+        """
+        # Read the current inventory state (items and quantity in one buffer)
+        inventory_buf = await snes_read(
+            ctx, cls._to_sni(INVENTORY_ITEMS_ADDR), INVENTORY_DATA_SIZE)
+        if inventory_buf is None:
+            return False
+
+        # inventory_buf  contains both item ID and quantity information
+        # Get slices for each type of data
+        # Only 0xF2 slots are used in each section, the rest are unused
+        inventory_ids = list(inventory_buf[:0xF2])
+        inventory_qty = list(inventory_buf[0x100:0xF2])
+
+        # Get a counter of the item IDs to be delivered.
+        counts_to_deliver = cls._get_item_counts_to_deliver(ctx, start_idx)
+
+        # Keep a list of inventory indexes that we update.
+        # Once we've updated out local copy of the inventory we can
+        # write back the updated fields to game RAM.
+        modified_inventory_idx_set = set()
+
+        for item_id, count in counts_to_deliver.items():
+            if item_id <= MAX_IN_GAME_ITEM_ID:
+                # Normal game item
+                if item_id in inventory_ids:
+                    # Player already has one, so add to existing count
+                    idx = inventory_ids.index(item_id)
+                    inventory_qty[idx] = min(inventory_qty[idx] + count, 99)
+                    modified_inventory_idx_set.add(idx)
+                else:
+                    # The player doesn't have this item yet
+                    # Add an entry to both the inventory ID and quantity sections
+                    # Inventory is not guaranteed to be sorted or contiguous.
+                    # Find the next empty slot and add the item there.
+                    new_item_idx = inventory_ids.index(0)
+                    inventory_ids[new_item_idx] = item_id
+                    inventory_qty[new_item_idx] = min(count, 99)
+                    modified_inventory_idx_set.add(new_item_idx)
+            else:
+                # Character, tech level, or other reward
+                ...
+
+        # The local inventory copy should be fully updated.  Now write just
+        # the changed item idxs back to the game RAM.
+        for idx in modified_inventory_idx_set:
+            snes_buffered_write(ctx, cls._to_sni(INVENTORY_ITEMS_ADDR + idx), bytes([inventory_ids[idx]]))
+            snes_buffered_write(ctx, cls._to_sni(INVENTORY_QTY_ADDR + idx), bytes([inventory_qty[idx]]))
+
+        await snes_flush_writes(ctx)
+
+        return True
+
+    @classmethod
+    async def _handle_item_delivery(cls, ctx: SNIContext):
+        """
+        Handle the item delivery process.
+
+        Item delivery is a multi-step process where:
+            1. The client sets a flag in game RAM to signify items are ready for delivery
+            2. The game sets a bit to acknowledge it is ready to receive items
+              a. This pauses game execution to facilitate atomic item delivery
+            3. The client directly writes items to game RAM
+              a. Inventory items are directly written to inventory
+              b. Characters and tech levels are written into buffers for the game to handle
+            4. Client updates item delivery counters
+            5. Client clears the items_available flag
+            6. The game clears its flag and continues executing
+        """
+        flags_buf = await snes_read(
+            ctx, cls._to_sni(ITEM_DELIVERY_FLAGS_ADDR), 1)
+        if flags_buf is None:
+            return
+
+        # Check delivery status bit in the game
+        items_available_bit = (flags_buf[0] & ITEM_AVAILABLE_BIT) > 0
+        game_ready_bit = (flags_buf[0] & GAME_READY_BIT) > 0
+
+        items_available, item_cnt = await cls._items_awaiting_delivery(ctx)
+        #if not items_available:
+        #    # No items to deliver
+        #    # TODO: Check if the game bit is set but we don't actually think
+        #    #       we need to delivery items.
+        #    #       This means we are out of sync.  Maybe we can recover?
+        #    return
+
+        if items_available and not items_available_bit:
+            # Set the item available flag
+            # This lets the game know we're ready to deliver items
+            new_flags_val = flags_buf[0] | ITEM_AVAILABLE_BIT
+            snes_buffered_write(ctx, cls._to_sni(ITEM_DELIVERY_FLAGS_ADDR), bytes([new_flags_val]))
+            await snes_flush_writes(ctx)
+            return
+
+        if not game_ready_bit:
+            # Wait for game to signal ready
+            return
+
+        # The game is ready to receive items.
+        # Send over everything awaiting delivery
+        delivery_successful = await cls._deliver_items(ctx, item_cnt)
+
+        if delivery_successful:
+            # Write back the total number of delivered items to the game RAM
+            # Stored as a 16 bit integer
+            total_delivered = len(ctx.items_received)
+            snes_buffered_write(ctx, cls._to_sni(RECEIVED_ITEM_CNT), total_delivered.to_bytes(2, byteorder="little"))
+
+            # Clear the item available bit
+            new_flags = flags_buf[0] & (~ITEM_AVAILABLE_BIT)
+            snes_buffered_write(ctx, cls._to_sni(ITEM_DELIVERY_FLAGS_ADDR), bytes(new_flags))
+
+            # Flush writes to finalize item delivery
+            await snes_flush_writes(ctx)
+
 
     async def _handle_victory_condition(
             self, ctx: SNIContext, event_data: bytes):
@@ -334,7 +468,6 @@ class CTRDIClient(SNIClient):
 
     @override
     async def validate_rom(self, ctx: SNIContext) -> bool:
-        from SNIClient import snes_read
 
         data = await snes_read(ctx, VALIDATION_ADDR, VALIDATION_SIZE)
         if data is None:
@@ -345,7 +478,6 @@ class CTRDIClient(SNIClient):
 
     @override
     async def game_watcher(self, ctx: SNIContext) -> None:
-        from SNIClient import snes_read
 
         if not ctx.allow_collect or ctx.server is None or ctx.slot is None:
             # Client isn't fully connected yet
@@ -353,7 +485,7 @@ class CTRDIClient(SNIClient):
 
         # Read the map and event data needed for subsequent checks
         map_data = await snes_read(ctx, LOCATION_ADDR, 2)
-        event_addr = self._convert_to_sni_addressing(EVENT_BASE_ADDR)
+        event_addr = self._to_sni(EVENT_BASE_ADDR)
         event_data = await snes_read(ctx, event_addr, EVENT_BLOCK_SIZE)
 
         if event_data is None:
@@ -363,7 +495,7 @@ class CTRDIClient(SNIClient):
         # handle new locations and item delivery.
         if self._can_track(event_data, map_data):
             new_locations = self._track_locations(ctx, event_data)
-            await self._deliver_next_item(ctx)
+            await self._handle_item_delivery(ctx)
 
             if len(new_locations) > 0:
                 # Send newly checked locations to the server
