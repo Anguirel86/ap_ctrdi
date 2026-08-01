@@ -1,15 +1,13 @@
 import logging
-import typing
-from collections import Counter
 from dataclasses import dataclass
-from typing import Tuple, override
+from typing import override
 
 import ctrando.common.memory
-from ctrando.common.ctenums import TreasureID as TID
+from ctrando.common.ctenums import ItemID, TreasureID
 from ctrando.common.memory import Flags
 from ctrando.treasures import treasuretypes
 
-from NetUtils import ClientStatus, NetworkItem
+from NetUtils import ClientStatus
 from SNIClient import SNIContext, snes_buffered_write, snes_flush_writes, snes_read
 from worlds.AutoSNIClient import SNIClient
 
@@ -31,22 +29,15 @@ SRAM_START = 0xE00000
 EVENT_BLOCK_SIZE = 0x200
 EVENT_BASE_ADDR = 0x7F0000
 TREASURE_BASE_ADDR = 0x7F0001
-RECEIVED_ITEM_ADDR = 0x7E287A  # TODO: Update this - JoT value
-RECEIVED_ITEM_CNT = 0x7E287C  # TODO: Update this - JoT value
+RECEIVED_ITEM_ADDR = 0x7F0039
+RECEIVED_ITEM_CNT = 0x7F003B
 VICTORY_ADDR = 0x00  # TODO: Get real victory flag ADDR
 VICTORY_FLAG = 0x01  # TODO: Get real victory flag bit
 
-INVENTORY_ITEMS_ADDR = 0x7E2400
-INVENTORY_QTY_ADDR = 0x7E2500
-INVENTORY_DATA_SIZE = 0x200
-
-ITEM_DELIVERY_FLAGS_ADDR = 0  # TODO: Update this - JoT value
-ITEM_AVAILABLE_BIT = 0x01
-GAME_READY_BIT = 0x02
 LOCATION_ADDR = 0xF50100  # Already in SNI address space
 
 # ROM/player/slot validation
-VALIDATION_ADDR = ROM_START + 0x3F8C03  # TODO: Update this - JoT value
+VALIDATION_ADDR = ROM_START + 0x3F8C03
 VALIDATION_SIZE = 0x20
 
 INVALID_TRACKING_LOCS = [0x00, 0x1B1]
@@ -75,127 +66,137 @@ class InventoryData:
 Dictionary of script based treasure locations to their respective
 memory flag or counter data.
 """
-_script_locations: dict[TID, Flags | CheckCounter] = {
+_script_locations: dict[TreasureID, Flags | CheckCounter] = {
     # Northern Ruins event chests
-    TID.NORTHERN_RUINS_BASEMENT_600: Flags.NORTHERN_RUINS_BASEMENT_CHEST_600_OBTAINED,
-    TID.NORTHERN_RUINS_BASEMENT_1000: Flags.NORTHERN_RUINS_BASEMENT_CHEST_1000_OBTAINED,
-    TID.NORTHERN_RUINS_ANTECHAMBER_LEFT_600: Flags.NORTHERN_RUINS_ANTECHAMBER_CHEST_600_OBTAINED,
-    TID.NORTHERN_RUINS_ANTECHAMBER_LEFT_1000: Flags.NORTHERN_RUINS_ANTECHAMBER_CHEST_1000_OBTAINED,
+    TreasureID.NORTHERN_RUINS_BASEMENT_600: Flags.NORTHERN_RUINS_BASEMENT_CHEST_600_OBTAINED,
+    TreasureID.NORTHERN_RUINS_BASEMENT_1000: Flags.NORTHERN_RUINS_BASEMENT_CHEST_1000_OBTAINED,
+    TreasureID.NORTHERN_RUINS_ANTECHAMBER_LEFT_600: Flags.NORTHERN_RUINS_ANTECHAMBER_CHEST_600_OBTAINED,
+    TreasureID.NORTHERN_RUINS_ANTECHAMBER_LEFT_1000: Flags.NORTHERN_RUINS_ANTECHAMBER_CHEST_1000_OBTAINED,
 
     # Sealed chests
-    TID.NORTHERN_RUINS_ANTECHAMBER_SEALED_600: Flags.NORTHERN_RUINS_ANTECHAMBER_SEALED_600_OBTAINED,
-    TID.NORTHERN_RUINS_ANTECHAMBER_SEALED_1000: Flags.NORTHERN_RUINS_ANTECHAMBER_SEALED_1000_OBTAINED,
-    TID.NORTHERN_RUINS_BACK_LEFT_SEALED_600: Flags.NORTHERN_RUINS_BACK_LEFT_SEALED_600_OBTAINED,
-    TID.NORTHERN_RUINS_BACK_LEFT_SEALED_1000: Flags.NORTHERN_RUINS_BACK_LEFT_SEALED_1000_OBTAINED,
-    TID.NORTHERN_RUINS_BACK_RIGHT_SEALED_600: Flags.NORTHERN_RUINS_BACK_RIGHT_SEALED_600_OBTAINED,
-    TID.NORTHERN_RUINS_BACK_RIGHT_SEALED_1000: Flags.NORTHERN_RUINS_BACK_RIGHT_SEALED_1000_OBTAINED,
-    TID.TRUCE_INN_SEALED_600: Flags.TRUCE_INN_SEALED_600_OBTAINED,
-    TID.TRUCE_INN_SEALED_1000: Flags.TRUCE_INN_SEALED_1000_OBTAINED,
-    TID.PYRAMID_LEFT: Flags.PYRAMID_LEFT_CHEST,
-    TID.PYRAMID_RIGHT: Flags.PYRAMID_RIGHT_CHEST,
-    TID.PORRE_ELDER_SEALED_1: Flags.PORRE_ELDER_SEALED_1_OBTAINED,
-    TID.PORRE_ELDER_SEALED_2: Flags.PORRE_ELDER_SEALED_2_OBTAINED,
-    TID.PORRE_MAYOR_SEALED_1: Flags.PORRE_MAYOR_SEALED_1_OBTAINED,
-    TID.PORRE_MAYOR_SEALED_2: Flags.PORRE_MAYOR_SEALED_2_OBTAINED,
-    TID.GUARDIA_CASTLE_SEALED_600: Flags.GUARDIA_CASTLE_SEALED_600_OBTAINED,
-    TID.GUARDIA_CASTLE_SEALED_1000: Flags.GUARDIA_CASTLE_SEALED_1000_OBTAINED,
-    TID.GUARDIA_FOREST_SEALED_600: Flags.GUARDIA_FOREST_SEALED_600_OBTAINED,
-    TID.GUARDIA_FOREST_SEALED_1000: Flags.GUARDIA_FOREST_DEAD_END_SEALED_CHEST,
-    TID.HECKRAN_SEALED_1: Flags.HECKRAN_SEALED_OBTAINED,
-    TID.HECKRAN_SEALED_2: Flags.HECKRAN_SEALED_OBTAINED,
-    TID.MAGIC_CAVE_SEALED: Flags.MAGIC_CAVE_SEALED_CHEST,
+    TreasureID.NORTHERN_RUINS_ANTECHAMBER_SEALED_600: Flags.NORTHERN_RUINS_ANTECHAMBER_SEALED_600_OBTAINED,
+    TreasureID.NORTHERN_RUINS_ANTECHAMBER_SEALED_1000: Flags.NORTHERN_RUINS_ANTECHAMBER_SEALED_1000_OBTAINED,
+    TreasureID.NORTHERN_RUINS_BACK_LEFT_SEALED_600: Flags.NORTHERN_RUINS_BACK_LEFT_SEALED_600_OBTAINED,
+    TreasureID.NORTHERN_RUINS_BACK_LEFT_SEALED_1000: Flags.NORTHERN_RUINS_BACK_LEFT_SEALED_1000_OBTAINED,
+    TreasureID.NORTHERN_RUINS_BACK_RIGHT_SEALED_600: Flags.NORTHERN_RUINS_BACK_RIGHT_SEALED_600_OBTAINED,
+    TreasureID.NORTHERN_RUINS_BACK_RIGHT_SEALED_1000: Flags.NORTHERN_RUINS_BACK_RIGHT_SEALED_1000_OBTAINED,
+    TreasureID.TRUCE_INN_SEALED_600: Flags.TRUCE_INN_SEALED_600_OBTAINED,
+    TreasureID.TRUCE_INN_SEALED_1000: Flags.TRUCE_INN_SEALED_1000_OBTAINED,
+    TreasureID.PYRAMID_LEFT: Flags.PYRAMID_LEFT_CHEST,
+    TreasureID.PYRAMID_RIGHT: Flags.PYRAMID_RIGHT_CHEST,
+    TreasureID.PORRE_ELDER_SEALED_1: Flags.PORRE_ELDER_SEALED_1_OBTAINED,
+    TreasureID.PORRE_ELDER_SEALED_2: Flags.PORRE_ELDER_SEALED_2_OBTAINED,
+    TreasureID.PORRE_MAYOR_SEALED_1: Flags.PORRE_MAYOR_SEALED_1_OBTAINED,
+    TreasureID.PORRE_MAYOR_SEALED_2: Flags.PORRE_MAYOR_SEALED_2_OBTAINED,
+    TreasureID.GUARDIA_CASTLE_SEALED_600: Flags.GUARDIA_CASTLE_SEALED_600_OBTAINED,
+    TreasureID.GUARDIA_CASTLE_SEALED_1000: Flags.GUARDIA_CASTLE_SEALED_1000_OBTAINED,
+    TreasureID.GUARDIA_FOREST_SEALED_600: Flags.GUARDIA_FOREST_SEALED_600_OBTAINED,
+    TreasureID.GUARDIA_FOREST_SEALED_1000: Flags.GUARDIA_FOREST_DEAD_END_SEALED_CHEST,
+    TreasureID.HECKRAN_SEALED_1: Flags.HECKRAN_SEALED_OBTAINED,
+    TreasureID.HECKRAN_SEALED_2: Flags.HECKRAN_SEALED_OBTAINED,
+    TreasureID.MAGIC_CAVE_SEALED: Flags.MAGIC_CAVE_SEALED_CHEST,
 
     # Standard key item locations
-    TID.REPTITE_LAIR_KEY: Flags.NIZBEL_DEFEATED,
-    TID.MELCHIOR_RAINBOW_SHELL: Flags.MELCHIOR_TREASURY_FREE_ITEM_GIVEN,
-    TID.MELCHIOR_SUNSTONE_RAINBOW: Flags.MELCHIOR_TREASURY_SUNSTONE_ITEM_GIVEN,
-    TID.MELCHIOR_SUNSTONE_SPECS: Flags.MELCHIOR_TREASURY_SUNSTONE_ITEM_GIVEN,
-    TID.FROGS_BURROW_LEFT: Flags.OBTAINED_BURROW_LEFT_ITEM,
-    TID.MT_WOE_KEY: Flags.MT_WOE_BOSS_DEFEATED,
-    TID.FIONA_KEY: Flags.OBTAINED_GREEN_DREAM_ITEM,
-    TID.ARRIS_DOME_DOAN_KEY: Flags.OBTAINED_DOAN_ITEM,
-    TID.SUN_PALACE_KEY: Flags.SUN_PALACE_ITEM_OBTAINED,
-    TID.GENO_DOME_BOSS_1: Flags.GENO_DOME_ATROPOS_DEFEATED,
-    TID.GENO_DOME_BOSS_2: Flags.GENO_DOME_MOTHER_BRAIN_DEFEATED,
-    TID.GIANTS_CLAW_KEY: Flags.OBTAINED_GIANTS_CLAW_KEY,
-    TID.KINGS_TRIAL_KEY: Flags.KINGS_TRIAL_COMPLETE,
-    TID.ZENAN_BRIDGE_CHEF: Flags.CHEF_GIVES_JERKY,
-    TID.ZENAN_BRIDGE_CHEF_TAB: Flags.CHEF_GIVES_JERKY,
-    TID.ZENAN_BRIDGE_CAPTAIN: Flags.ZENAN_CAPTAIN_ITEM,
-    TID.SNAIL_STOP_KEY: Flags.OBTAINED_SNAIL_STOP_ITEM,
-    TID.LAZY_CARPENTER: Flags.CHORAS_1000_RECEIVED_TOOLS,
-    TID.TABAN_GIFT_VEST: Flags.TABAN_VEST_GIVEN,
-    TID.DENADORO_MTS_KEY: Flags.OBTAINED_DENADORO_KEY,
+    TreasureID.REPTITE_LAIR_KEY: Flags.NIZBEL_DEFEATED,
+    TreasureID.MELCHIOR_RAINBOW_SHELL: Flags.MELCHIOR_TREASURY_FREE_ITEM_GIVEN,
+    TreasureID.MELCHIOR_SUNSTONE_RAINBOW: Flags.MELCHIOR_TREASURY_SUNSTONE_ITEM_GIVEN,
+    TreasureID.MELCHIOR_SUNSTONE_SPECS: Flags.MELCHIOR_TREASURY_SUNSTONE_ITEM_GIVEN,
+    TreasureID.FROGS_BURROW_LEFT: Flags.OBTAINED_BURROW_LEFT_ITEM,
+    TreasureID.MT_WOE_KEY: Flags.MT_WOE_BOSS_DEFEATED,
+    TreasureID.FIONA_KEY: Flags.OBTAINED_GREEN_DREAM_ITEM,
+    TreasureID.ARRIS_DOME_DOAN_KEY: Flags.OBTAINED_DOAN_ITEM,
+    TreasureID.SUN_PALACE_KEY: Flags.SUN_PALACE_ITEM_OBTAINED,
+    TreasureID.GENO_DOME_BOSS_1: Flags.GENO_DOME_ATROPOS_DEFEATED,
+    TreasureID.GENO_DOME_BOSS_2: Flags.GENO_DOME_MOTHER_BRAIN_DEFEATED,
+    TreasureID.GIANTS_CLAW_KEY: Flags.OBTAINED_GIANTS_CLAW_KEY,
+    TreasureID.KINGS_TRIAL_KEY: Flags.KINGS_TRIAL_COMPLETE,
+    TreasureID.ZENAN_BRIDGE_CHEF: Flags.CHEF_GIVES_JERKY,
+    TreasureID.ZENAN_BRIDGE_CHEF_TAB: Flags.CHEF_GIVES_JERKY,
+    TreasureID.ZENAN_BRIDGE_CAPTAIN: Flags.ZENAN_CAPTAIN_ITEM,
+    TreasureID.SNAIL_STOP_KEY: Flags.OBTAINED_SNAIL_STOP_ITEM,
+    TreasureID.LAZY_CARPENTER: Flags.CHORAS_1000_RECEIVED_TOOLS,
+    TreasureID.TABAN_GIFT_VEST: Flags.TABAN_VEST_GIVEN,
+    TreasureID.DENADORO_MTS_KEY: Flags.OBTAINED_DENADORO_KEY,
 
     # Other script treasures
-    TID.TABAN_GIFT_HELM: Flags.TABAN_HELM_GIVEN,
-    TID.TABAN_GIFT_SUIT: Flags.TABAN_SUIT_GIVEN,
-    TID.JERKY_GIFT: Flags.PORRE_JERKY_ITEM_OBTAINED,
-    TID.DENADORO_ROCK: Flags.OBTAINED_GOLD_ROCK,
-    TID.LARUBA_ROCK: Flags.RECEIVED_SILVER_ROCK,
-    TID.KAJAR_ROCK: Flags.OBTAINED_BLACK_ROCK,
-    TID.BEKKLER_KEY: Flags.HAS_BEKKLER_ITEM,
-    TID.CYRUS_GRAVE_KEY: Flags.MASAMUNE_UPGRADED,
-    TID.SUN_KEEP_2300: Flags.MOONSTONE_COLLECTED_2300,
-    TID.ARRIS_DOME_FOOD_LOCKER_KEY: Flags.OBTAINED_ARRIS_FOOD_ITEM,
-    TID.LUCCA_WONDERSHOT: Flags.LUCCA_MAKING_WONDERSHOT,
-    TID.TABAN_SUNSHADES: Flags.WONDERSHOT_SUNSHADES_RECEIVED,
-    TID.TATA_REWARD: Flags.OBTAINED_TATA_ITEM,
-    TID.TOMA_REWARD: Flags.OBTAINED_TOMA_ITEM,
-    TID.MELCHIOR_FORGE_MASA: Flags.HAS_FORGED_MASAMUNE,
-    TID.EOT_GASPAR_REWARD: Flags.HAS_GASPAR_ITEM,
-    TID.FAIR_PENDANT: Flags.FAIR_PENDANT_PICKED_UP,
-    TID.HUNTING_RANGE_NU_REWARD: Flags.HUNTING_RANGE_NU_REWARD,
-    TID.ZEAL_MAMMON_MACHINE: Flags.HAS_USED_MAMMON_MACHINE,
-    TID.MAGUS_CASTLE_FOUR_KIDS: Flags.MAGUS_CASTLE_GHOST_KIDS_CHEST,
-    TID.MAGUS_CASTLE_SLASH_SWORD_FLOOR: Flags.MAGUS_CASTLE_SLASH_SWORD_TREASURE,
-    TID.GUARDIA_PRISON_LUNCH_BAG: Flags.RECEIVED_PRISON_CELL_GIFT,
-    TID.DORINO_BROMIDE_MAGIC_TAB: Flags.DORINO_BROMIDE_MAGIC_TAB,
-    TID.GUARDIA_FOREST_POWER_TAB_600: Flags.OBTAINED_GUARDIA_FOREST_600_TAB,
-    TID.GUARDIA_FOREST_POWER_TAB_1000: Flags.OBTAINED_GUARDIA_FOREST_1000_TAB,
-    TID.MANORIA_CONFINEMENT_POWER_TAB: Flags.MANORIA_CONFINEMENT_POWER_TAB,
-    TID.PORRE_MARKET_600_POWER_TAB: Flags.PORRE_MARKET_600_TAB,
-    TID.DENADORO_MTS_SPEED_TAB: Flags.DENADORO_MTS_SPEED_TAB,
-    TID.TOMAS_GRAVE_SPEED_TAB: Flags.WEST_CAPE_SPEED_TAB,
-    TID.GIANTS_CLAW_CAVERNS_POWER_TAB: Flags.GIANTS_CLAW_CAVERNS_POWER_TAB,
-    TID.GIANTS_CLAW_ENTRANCE_POWER_TAB: Flags.GIANTS_CLAW_ENTRANCE_POWER_TAB,
-    TID.GIANTS_CLAW_TRAPS_POWER_TAB: Flags.GIANTS_CLAW_TRAPS_POWER_TAB,
-    TID.SUN_KEEP_600_POWER_TAB: Flags.SUN_KEEP_600_POWER_TAB,
-    TID.MEDINA_ELDER_SPEED_TAB: Flags.MEDINA_ELDER_SPEED_TAB,
-    TID.MEDINA_ELDER_MAGIC_TAB: Flags.MEDINA_ELDER_MAGIC_TAB,
-    TID.MAGUS_CASTLE_FLEA_MAGIC_TAB: Flags.MAGUS_CASTLE_FLEA_MAGIC_TAB,
-    TID.MAGUS_CASTLE_DUNGEONS_MAGIC_TAB: Flags.MAGUS_CASTLE_DUNGEONS_MAGIC_TAB,
-    TID.TRANN_DOME_SEALED_MAGIC_TAB: Flags.TRANN_DOME_SEALED_MAGIC_TAB,
-    TID.ARRIS_DOME_SEALED_POWER_TAB: Flags.ARRIS_DOME_SEALED_POWER_TAB,
-    TID.DEATH_PEAK_POWER_TAB: Flags.DEATH_PEAK_POWER_TAB,
-    TID.BLACKBIRD_DUCTS_MAGIC_TAB: Flags.BLACKBIRD_DUCTS_MAGIC_TAB,
-    TID.KEEPERS_DOME_MAGIC_TAB: Flags.OBTAINED_KEEPERS_DOME_MAGIC_TAB,
-    TID.GENO_DOME_ATROPOS_MAGIC_TAB: Flags.GENO_DOME_ATROPOS_MAGIC_TAB,
-    TID.GENO_DOME_CORRIDOR_POWER_TAB: Flags.GENO_DOME_CORRIDOR_POWER_TAB,
-    TID.GENO_DOME_LABS_MAGIC_TAB: Flags.GENO_DOME_LABS_MAGIC_TAB,
-    TID.GENO_DOME_LABS_SPEED_TAB: Flags.GENO_DOME_LABS_SPEED_TAB,
-    TID.ENHASA_NU_BATTLE_MAGIC_TAB: Flags.ENHASA_NU_BATTLE,
-    TID.ENHASA_NU_BATTLE_SPEED_TAB: Flags.ENHASA_NU_BATTLE,
-    TID.KAJAR_SPEED_TAB: Flags.KAJAR_MAGIC_LAB_SPEED_TAB,
-    TID.KAJAR_NU_SCRATCH_MAGIC_TAB: Flags.NU_SCRATCH_MAGIC_TAB,
-    TID.LAST_VILLAGE_NU_SHOP_MAGIC_TAB: Flags.LAST_VILLAGE_NU_SHOP_MAGIC_TAB,
-    TID.SUNKEN_DESERT_POWER_TAB: Flags.SUNKEN_DESERT_POWER_TAB,
-    TID.MOUNTAINS_RE_NICE_MAGIC_TAB: Flags.MOUNTAINS_RE_NICE_MAGIC_TAB,
-    TID.BEAST_NEST_POWER_TAB: Flags.BEAST_NEST_POWER_TAB,
-    TID.MT_WOE_MAGIC_TAB: Flags.MT_WOE_MAGIC_TAB,
-    TID.OCEAN_PALACE_ELEVATOR_MAGIC_TAB: Flags.OCEAN_PALACE_ELEVATOR_MAGIC_TAB,
-    TID.OZZIES_FORT_GUILLOTINES_TAB: Flags.OZZIES_FORT_GUILLOTINES_TAB,
-    TID.PROTO_DOME_PORTAL_TAB: Flags.PROTO_DOME_PORTAL_POWER_TAB,
-    TID.NORTHERN_RUINS_HEROS_GRAVE_MAGIC_TAB: Flags.CYRUS_GRAVE_MAGIC_TAB,
-    TID.NORTHERN_RUINS_LANDING_POWER_TAB: Flags.NORTHERN_RUINS_LANDING_POWER_TAB,
-    TID.CRONOS_MOM: Flags.MOM_GAVE_MONEY,
-    TID.TRUCE_MAYOR_2F_OLD_MAN: CheckCounter(
+    TreasureID.TABAN_GIFT_HELM: Flags.TABAN_HELM_GIVEN,
+    TreasureID.TABAN_GIFT_SUIT: Flags.TABAN_SUIT_GIVEN,
+    TreasureID.JERKY_GIFT: Flags.PORRE_JERKY_ITEM_OBTAINED,
+    TreasureID.DENADORO_ROCK: Flags.OBTAINED_GOLD_ROCK,
+    TreasureID.LARUBA_ROCK: Flags.RECEIVED_SILVER_ROCK,
+    TreasureID.KAJAR_ROCK: Flags.OBTAINED_BLACK_ROCK,
+    TreasureID.BEKKLER_KEY: Flags.HAS_BEKKLER_ITEM,
+    TreasureID.CYRUS_GRAVE_KEY: Flags.MASAMUNE_UPGRADED,
+    TreasureID.SUN_KEEP_2300: Flags.MOONSTONE_COLLECTED_2300,
+    TreasureID.ARRIS_DOME_FOOD_LOCKER_KEY: Flags.OBTAINED_ARRIS_FOOD_ITEM,
+    TreasureID.LUCCA_WONDERSHOT: Flags.LUCCA_MAKING_WONDERSHOT,
+    TreasureID.TABAN_SUNSHADES: Flags.WONDERSHOT_SUNSHADES_RECEIVED,
+    TreasureID.TATA_REWARD: Flags.OBTAINED_TATA_ITEM,
+    TreasureID.TOMA_REWARD: Flags.OBTAINED_TOMA_ITEM,
+    TreasureID.MELCHIOR_FORGE_MASA: Flags.HAS_FORGED_MASAMUNE,
+    TreasureID.EOT_GASPAR_REWARD: Flags.HAS_GASPAR_ITEM,
+    TreasureID.FAIR_PENDANT: Flags.FAIR_PENDANT_PICKED_UP,
+    TreasureID.HUNTING_RANGE_NU_REWARD: Flags.HUNTING_RANGE_NU_REWARD,
+    TreasureID.ZEAL_MAMMON_MACHINE: Flags.HAS_USED_MAMMON_MACHINE,
+    TreasureID.MAGUS_CASTLE_FOUR_KIDS: Flags.MAGUS_CASTLE_GHOST_KIDS_CHEST,
+    TreasureID.MAGUS_CASTLE_SLASH_SWORD_FLOOR: Flags.MAGUS_CASTLE_SLASH_SWORD_TREASURE,
+    TreasureID.GUARDIA_PRISON_LUNCH_BAG: Flags.RECEIVED_PRISON_CELL_GIFT,
+    TreasureID.DORINO_BROMIDE_MAGIC_TAB: Flags.DORINO_BROMIDE_MAGIC_TAB,
+    TreasureID.GUARDIA_FOREST_POWER_TAB_600: Flags.OBTAINED_GUARDIA_FOREST_600_TAB,
+    TreasureID.GUARDIA_FOREST_POWER_TAB_1000: Flags.OBTAINED_GUARDIA_FOREST_1000_TAB,
+    TreasureID.MANORIA_CONFINEMENT_POWER_TAB: Flags.MANORIA_CONFINEMENT_POWER_TAB,
+    TreasureID.PORRE_MARKET_600_POWER_TAB: Flags.PORRE_MARKET_600_TAB,
+    TreasureID.DENADORO_MTS_SPEED_TAB: Flags.DENADORO_MTS_SPEED_TAB,
+    TreasureID.TOMAS_GRAVE_SPEED_TAB: Flags.WEST_CAPE_SPEED_TAB,
+    TreasureID.GIANTS_CLAW_CAVERNS_POWER_TAB: Flags.GIANTS_CLAW_CAVERNS_POWER_TAB,
+    TreasureID.GIANTS_CLAW_ENTRANCE_POWER_TAB: Flags.GIANTS_CLAW_ENTRANCE_POWER_TAB,
+    TreasureID.GIANTS_CLAW_TRAPS_POWER_TAB: Flags.GIANTS_CLAW_TRAPS_POWER_TAB,
+    TreasureID.SUN_KEEP_600_POWER_TAB: Flags.SUN_KEEP_600_POWER_TAB,
+    TreasureID.MEDINA_ELDER_SPEED_TAB: Flags.MEDINA_ELDER_SPEED_TAB,
+    TreasureID.MEDINA_ELDER_MAGIC_TAB: Flags.MEDINA_ELDER_MAGIC_TAB,
+    TreasureID.MAGUS_CASTLE_FLEA_MAGIC_TAB: Flags.MAGUS_CASTLE_FLEA_MAGIC_TAB,
+    TreasureID.MAGUS_CASTLE_DUNGEONS_MAGIC_TAB: Flags.MAGUS_CASTLE_DUNGEONS_MAGIC_TAB,
+    TreasureID.TRANN_DOME_SEALED_MAGIC_TAB: Flags.TRANN_DOME_SEALED_MAGIC_TAB,
+    TreasureID.ARRIS_DOME_SEALED_POWER_TAB: Flags.ARRIS_DOME_SEALED_POWER_TAB,
+    TreasureID.DEATH_PEAK_POWER_TAB: Flags.DEATH_PEAK_POWER_TAB,
+    TreasureID.BLACKBIRD_DUCTS_MAGIC_TAB: Flags.BLACKBIRD_DUCTS_MAGIC_TAB,
+    TreasureID.KEEPERS_DOME_MAGIC_TAB: Flags.OBTAINED_KEEPERS_DOME_MAGIC_TAB,
+    TreasureID.GENO_DOME_ATROPOS_MAGIC_TAB: Flags.GENO_DOME_ATROPOS_MAGIC_TAB,
+    TreasureID.GENO_DOME_CORRIDOR_POWER_TAB: Flags.GENO_DOME_CORRIDOR_POWER_TAB,
+    TreasureID.GENO_DOME_LABS_MAGIC_TAB: Flags.GENO_DOME_LABS_MAGIC_TAB,
+    TreasureID.GENO_DOME_LABS_SPEED_TAB: Flags.GENO_DOME_LABS_SPEED_TAB,
+    TreasureID.ENHASA_NU_BATTLE_MAGIC_TAB: Flags.ENHASA_NU_BATTLE,
+    TreasureID.ENHASA_NU_BATTLE_SPEED_TAB: Flags.ENHASA_NU_BATTLE,
+    TreasureID.KAJAR_SPEED_TAB: Flags.KAJAR_MAGIC_LAB_SPEED_TAB,
+    TreasureID.KAJAR_NU_SCRATCH_MAGIC_TAB: Flags.NU_SCRATCH_MAGIC_TAB,
+    TreasureID.LAST_VILLAGE_NU_SHOP_MAGIC_TAB: Flags.LAST_VILLAGE_NU_SHOP_MAGIC_TAB,
+    TreasureID.SUNKEN_DESERT_POWER_TAB: Flags.SUNKEN_DESERT_POWER_TAB,
+    TreasureID.MOUNTAINS_RE_NICE_MAGIC_TAB: Flags.MOUNTAINS_RE_NICE_MAGIC_TAB,
+    TreasureID.BEAST_NEST_POWER_TAB: Flags.BEAST_NEST_POWER_TAB,
+    TreasureID.MT_WOE_MAGIC_TAB: Flags.MT_WOE_MAGIC_TAB,
+    TreasureID.OCEAN_PALACE_ELEVATOR_MAGIC_TAB: Flags.OCEAN_PALACE_ELEVATOR_MAGIC_TAB,
+    TreasureID.OZZIES_FORT_GUILLOTINES_TAB: Flags.OZZIES_FORT_GUILLOTINES_TAB,
+    TreasureID.PROTO_DOME_PORTAL_TAB: Flags.PROTO_DOME_PORTAL_POWER_TAB,
+    TreasureID.NORTHERN_RUINS_HEROS_GRAVE_MAGIC_TAB: Flags.CYRUS_GRAVE_MAGIC_TAB,
+    TreasureID.NORTHERN_RUINS_LANDING_POWER_TAB: Flags.NORTHERN_RUINS_LANDING_POWER_TAB,
+    TreasureID.CRONOS_MOM: Flags.MOM_GAVE_MONEY,
+    TreasureID.TRUCE_MAYOR_2F_OLD_MAN: CheckCounter(
         ctrando.common.memory.Memory.TRUCE_MAYOR_2F_GOLD_NPC_COUNTER, 2),
-    TID.IOKA_SWEETWATER_TONIC: Flags.OBTAINED_SWEETWATER_HUT_TONICS,
-    TID.DORINO_INN_POWERMEAL: Flags.OBTAINED_DORINO_INN_POWERMEAL,
-    TID.YAKRA_KEY_CHEST: Flags.RESCUE_CHANCELLOR_1000,
-    TID.COURTROOM_YAKRA_KEY: Flags.OBTAINED_YAKRA_KEY,
-    TID.JOHNNY_RACE_POWER_TAB: Flags.OBTAINED_JOHNNY_RACE_POWER_TAB
+    TreasureID.IOKA_SWEETWATER_TONIC: Flags.OBTAINED_SWEETWATER_HUT_TONICS,
+    TreasureID.DORINO_INN_POWERMEAL: Flags.OBTAINED_DORINO_INN_POWERMEAL,
+    TreasureID.YAKRA_KEY_CHEST: Flags.RESCUE_CHANCELLOR_1000,
+    TreasureID.COURTROOM_YAKRA_KEY: Flags.OBTAINED_YAKRA_KEY,
+    TreasureID.JOHNNY_RACE_POWER_TAB: Flags.OBTAINED_JOHNNY_RACE_POWER_TAB
+}
+
+# Map upgraded progressive items to their base items.
+# We only send base items to the game and it sorts out the rest
+_progressive_items: dict[int, int] = {
+    ItemID.PENDANT_CHARGE: ItemID.PENDANT,
+    ItemID.MASAMUNE_2: ItemID.MASAMUNE_1,
+    ItemID.PRISMSHARD: ItemID.RAINBOW_SHELL,
+    ItemID.CLONE: ItemID.C_TRIGGER,
+    ItemID.RACE_LOG: ItemID.BIKE_KEY,
 }
 
 
@@ -208,7 +209,7 @@ class CTRDIClient(SNIClient):
 
     def __init__(self):
         super().__init__()
-        self._loc_name_to_id = {str(loc): ITEM_ID_BASE + loc for loc in TID}
+        self._loc_name_to_id = {str(loc): ITEM_ID_BASE + loc for loc in TreasureID}
 
     @staticmethod
     def _to_sni(addr: int) -> int:
@@ -229,7 +230,7 @@ class CTRDIClient(SNIClient):
         return (event_data[chest_data_start + byte_offset] & bit) > 0
 
     @staticmethod
-    def _is_script_treasure_collected(event_data, loc: TID) -> bool:
+    def _is_script_treasure_collected(event_data, loc: TreasureID) -> bool:
         """
         Check if a script based treasure has been collected
         """
@@ -241,11 +242,12 @@ class CTRDIClient(SNIClient):
         if isinstance(check_data, Flags):
             # Standard memory flag
             return event_data[offset] & check_data.bit
-        elif isinstance(check_data, CheckCounter):
+
+        if isinstance(check_data, CheckCounter):
             # Counter type check
             return event_data[offset] >= check_data.count
-        else:
-            raise Exception(f"Unknown check type for {check_data!s}")
+
+        raise Exception(f"Unknown check type for {check_data!s}")
 
     def _can_track(
             self,
@@ -303,18 +305,12 @@ class CTRDIClient(SNIClient):
 
         return new_locations
 
-    @staticmethod
-    def _get_item_counts_to_deliver(ctx: SNIContext, start_idx: int) -> Counter[int]:
-        """
-        Get a Counter containing the IDs of items to be delivered.
-        """
-        return Counter([x.item - ITEM_ID_BASE for x in ctx.items_received[start_idx:]])
 
     @classmethod
-    async def _items_awaiting_delivery(cls, ctx: SNIContext) -> tuple[bool, int]:
+    async def _get_next_item_to_deliver(cls, ctx: SNIContext) -> tuple[bool, int]:
         """
-        Fetch the number of items that have already been delivered.
-        This is stored in the game's memory.
+        Check if we have any items awaiting delivery and if so, return
+        the (AP) ID of that item.
         """
         item_cnt_buf = await snes_read(
             ctx, cls._to_sni(RECEIVED_ITEM_CNT), 2)
@@ -328,132 +324,95 @@ class CTRDIClient(SNIClient):
             # No items to deliver
             return False, item_cnt - num_items_received
 
-        return True, item_cnt
+        return True, ctx.items_received[item_cnt].item
+
 
     @classmethod
-    async def _deliver_items(cls, ctx:SNIContext, start_idx: int) -> bool:
+    async def _game_ready_for_delivery(cls, ctx: SNIContext) -> bool:
         """
-        Handle the actual item delivery.
-
-        Write items directly into player inventory.
-        TODO: Character and tech level rewards
+        Check the delivery buffer address to see if the game
+        is ready for another item to be delivered.
         """
-        # Read the current inventory state (items and quantity in one buffer)
-        inventory_buf = await snes_read(
-            ctx, cls._to_sni(INVENTORY_ITEMS_ADDR), INVENTORY_DATA_SIZE)
-        if inventory_buf is None:
+        delivery_buf = await snes_read(
+            ctx, cls._to_sni(RECEIVED_ITEM_ADDR), 2)
+        if delivery_buf is None:
             return False
 
-        # inventory_buf  contains both item ID and quantity information
-        # Get slices for each type of data
-        # Only 0xF2 slots are used in each section, the rest are unused
-        inventory_ids = list(inventory_buf[:0xF2])
-        inventory_qty = list(inventory_buf[0x100:0xF2])
+        if delivery_buf[0] != 0 or delivery_buf[1] != 0:
+            # There's already an item in the delivery buffer
+            return False
 
-        # Get a counter of the item IDs to be delivered.
-        counts_to_deliver = cls._get_item_counts_to_deliver(ctx, start_idx)
-
-        # Keep a list of inventory indexes that we update.
-        # Once we've updated out local copy of the inventory we can
-        # write back the updated fields to game RAM.
-        modified_inventory_idx_set = set()
-
-        for item_id, count in counts_to_deliver.items():
-            if item_id <= MAX_IN_GAME_ITEM_ID:
-                # Normal game item
-                if item_id in inventory_ids:
-                    # Player already has one, so add to existing count
-                    idx = inventory_ids.index(item_id)
-                    inventory_qty[idx] = min(inventory_qty[idx] + count, 99)
-                    modified_inventory_idx_set.add(idx)
-                else:
-                    # The player doesn't have this item yet
-                    # Add an entry to both the inventory ID and quantity sections
-                    # Inventory is not guaranteed to be sorted or contiguous.
-                    # Find the next empty slot and add the item there.
-                    new_item_idx = inventory_ids.index(0)
-                    inventory_ids[new_item_idx] = item_id
-                    inventory_qty[new_item_idx] = min(count, 99)
-                    modified_inventory_idx_set.add(new_item_idx)
-            else:
-                # Character, tech level, or other reward
-                ...
-
-        # The local inventory copy should be fully updated.  Now write just
-        # the changed item idxs back to the game RAM.
-        for idx in modified_inventory_idx_set:
-            snes_buffered_write(ctx, cls._to_sni(INVENTORY_ITEMS_ADDR + idx), bytes([inventory_ids[idx]]))
-            snes_buffered_write(ctx, cls._to_sni(INVENTORY_QTY_ADDR + idx), bytes([inventory_qty[idx]]))
-
-        await snes_flush_writes(ctx)
-
+        # Delivery buffer is clear, we are good to send.
         return True
 
     @classmethod
-    async def _handle_item_delivery(cls, ctx: SNIContext):
+    def _convert_item_to_game_format(cls, local_item_id: int) -> int:
         """
-        Handle the item delivery process.
+        Convert the item ID into the format the rando recognizes for item delivery.
 
-        Item delivery is a multi-step process where:
-            1. The client sets a flag in game RAM to signify items are ready for delivery
-            2. The game sets a bit to acknowledge it is ready to receive items
-              a. This pauses game execution to facilitate atomic item delivery
-            3. The client directly writes items to game RAM
-              a. Inventory items are directly written to inventory
-              b. Characters and tech levels are written into buffers for the game to handle
-            4. Client updates item delivery counters
-            5. Client clears the items_available flag
-            6. The game clears its flag and continues executing
+        0x80nn - Character type item
+        0x40nn - Tech type item
+        0x20nn - Normal type item
+        0x00nn - Ignored/no-op
+
+        # TODO: Clean up the magic numbers here
+        #       Maybe add conversion functions in an Items module?
         """
-        flags_buf = await snes_read(
-            ctx, cls._to_sni(ITEM_DELIVERY_FLAGS_ADDR), 1)
-        if flags_buf is None:
+        # Normal item
+        if local_item_id <= MAX_IN_GAME_ITEM_ID:
+            return (local_item_id | 0x2000)
+
+        # Character
+        if local_item_id >= 0x100 and local_item_id < 0x110:
+            return (local_item_id | 0x8000)
+
+        # Tech level
+        if local_item_id >= 0x110 and local_item_id < 0x120:
+            return (local_item_id | 0x4000)
+
+        raise Exception(f"Unknown item ID {local_item_id}")
+
+    @classmethod
+    async def _try_deliver_next_item(cls, ctx: SNIContext):
+        """
+        Deliver the next item if there are any available.
+
+        Check the game's item counter against the client's number of
+        received items and see if we have any items awaiting delivery.
+        If so, then deliver the next one.
+        """
+
+        # Check the item delivery buffer. If it is not empty, then
+        # the game is still busy delivering the previous item.
+        game_ready = await cls._game_ready_for_delivery(ctx)
+        if not game_ready:
             return
 
-        # Check delivery status bit in the game
-        items_available_bit = (flags_buf[0] & ITEM_AVAILABLE_BIT) > 0
-        game_ready_bit = (flags_buf[0] & GAME_READY_BIT) > 0
-
-        items_available, item_cnt = await cls._items_awaiting_delivery(ctx)
-        #if not items_available:
-        #    # No items to deliver
-        #    # TODO: Check if the game bit is set but we don't actually think
-        #    #       we need to delivery items.
-        #    #       This means we are out of sync.  Maybe we can recover?
-        #    return
-
-        if items_available and not items_available_bit:
-            # Set the item available flag
-            # This lets the game know we're ready to deliver items
-            new_flags_val = flags_buf[0] | ITEM_AVAILABLE_BIT
-            snes_buffered_write(ctx, cls._to_sni(ITEM_DELIVERY_FLAGS_ADDR), bytes([new_flags_val]))
-            await snes_flush_writes(ctx)
+        # Check if we have any items awaiting delivery.
+        # If so, we also get the index of the next item
+        items_available, ap_item_id = await cls._get_next_item_to_deliver(ctx)
+        if not items_available:
             return
 
-        if not game_ready_bit:
-            # Wait for game to signal ready
-            return
+        # Convert from AP item IDs to local CT item IDs
+        game_item_id = ap_item_id - ITEM_ID_BASE
 
-        # The game is ready to receive items.
-        # Send over everything awaiting delivery
-        delivery_successful = await cls._deliver_items(ctx, item_cnt)
+        # Check if this is a progressive item. We only send the base version to the game
+        # and it sorts out the upgrades.
+        if game_item_id in _progressive_items:
+            game_item_id = _progressive_items[game_item_id]
 
-        if delivery_successful:
-            # Write back the total number of delivered items to the game RAM
-            # Stored as a 16 bit integer
-            total_delivered = len(ctx.items_received)
-            snes_buffered_write(ctx, cls._to_sni(RECEIVED_ITEM_CNT), total_delivered.to_bytes(2, byteorder="little"))
+        # Convert the item to an ID format the game's delivery code will recognize
+        game_item_id = cls._convert_item_to_game_format(game_item_id)
 
-            # Clear the item available bit
-            new_flags = flags_buf[0] & (~ITEM_AVAILABLE_BIT)
-            snes_buffered_write(ctx, cls._to_sni(ITEM_DELIVERY_FLAGS_ADDR), bytes(new_flags))
+        # We have items to deliver and the game is ready to receive them
+        snes_buffered_write(
+            ctx,
+            cls._to_sni(RECEIVED_ITEM_ADDR),
+            game_item_id.to_bytes(2, byteorder="little"))
+        await snes_flush_writes(ctx)
 
-            # Flush writes to finalize item delivery
-            await snes_flush_writes(ctx)
-
-
-    async def _handle_victory_condition(
-            self, ctx: SNIContext, event_data: bytes):
+    async def _handle_victory_condition(self, ctx: SNIContext, event_data: bytes):
         """
         Check if the player has achieved the goal.
         """
@@ -470,10 +429,18 @@ class CTRDIClient(SNIClient):
     async def validate_rom(self, ctx: SNIContext) -> bool:
 
         data = await snes_read(ctx, VALIDATION_ADDR, VALIDATION_SIZE)
-        if data is None:
+        if data is None or data[0:5] != b"APRDI":
             return False
 
-        # TODO: Actual slot validation
+        # Name should be a 8 byte hash of the player's settings name
+        # TODO: Include seed info in validation so ROMs can't be reused?
+        name = data[5:13]
+
+        ctx.game = self.game
+        ctx.items_handling = 0b001
+        ctx.rom = name
+        ctx.allow_collect = True
+
         return True
 
     @override
@@ -495,7 +462,7 @@ class CTRDIClient(SNIClient):
         # handle new locations and item delivery.
         if self._can_track(event_data, map_data):
             new_locations = self._track_locations(ctx, event_data)
-            await self._handle_item_delivery(ctx)
+            await self._try_deliver_next_item(ctx)
 
             if len(new_locations) > 0:
                 # Send newly checked locations to the server

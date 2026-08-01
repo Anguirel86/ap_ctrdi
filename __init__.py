@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import os
 import typing
 from collections.abc import Callable
@@ -40,13 +41,15 @@ from .Options import CTRDIOptions, option_groups
 #  - General organization/cleanup pass, add helper classes, etc
 
 
+rdi_logger = logging.getLogger("RDI")
+
 # TODO: Pick a real item ID offset
 # Offset to give CTRDI items a unique item range in AP
 ITEM_ID_BASE = 50_350_000
 CTUSA_MD5_HASH = "a2bc447961e52fd2227baed164f729dc"
 
 
-class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):
+class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):  # pyright: ignore[reportAttributeAccessIssue]
     hash = CTUSA_MD5_HASH
     game = "Chrono Trigger Rando-Dalton Imperial"
     patch_file_ending = ".apctrdi"
@@ -84,7 +87,8 @@ class RegionData:
     rdi_region: LocRegion | OWRegion
     ap_region: Region
 
-
+# NOTE: Trading post locations are not included for now since they can't be tracked.
+#       If/when flags get added for them we can add them back.
 _locs_to_skip: list[TID] = [
     TID.TRADING_POST_PETAL_FANG_BASE,
     TID.TRADING_POST_PETAL_FANG_UPGRADE,
@@ -103,6 +107,30 @@ _locs_to_skip: list[TID] = [
 ]
 
 
+def _build_item_mappings() -> dict[str, int]:
+    """
+    Build the item and location name-to-ID mappings.
+    Also adds 7 character items and their associated tech level items
+    """
+    item_name_to_id = {str(item): ITEM_ID_BASE + item for item in ItemID}
+
+    # Add 7 character items and tech level items
+    char_names = ["Crono", "Marle", "Lucca", "Robo", "Frog", "Ayla", "Magus"]
+    tech_level_names = [f"tech_level_{i}" for i in range(7)]
+
+    # Add character items
+    for i, name in enumerate(char_names):
+        item_name_to_id[name] = ITEM_ID_BASE + 0x100 + i
+
+    # Add tech level items
+    for i, name in enumerate(tech_level_names):
+        item_name_to_id[name] = ITEM_ID_BASE + 0x110 + i
+
+    return item_name_to_id
+
+def _build_loc_mappings() -> dict[str, int]:
+    return {str(loc): ITEM_ID_BASE + loc for loc in TID}
+
 class CTRDIWorld(World):
     """
     TODO: CTRDI description here
@@ -113,19 +141,18 @@ class CTRDIWorld(World):
     options_dataclass = CTRDIOptions
     Options: CTRDIOptions
     settings_key = "ctrdi_options"
-    settings: typing.ClassVar[CTRDISettings]
+    settings: typing.ClassVar[CTRDISettings]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     web = CTRDIWebWorld()
 
     rdi_settings: arguments.Settings
     config: randostate.ConfigState
 
-    item_name_to_id = {str(item): ITEM_ID_BASE +  # noqa: RUF012
-                       item for item in ItemID}
-    location_name_to_id = {str(loc): ITEM_ID_BASE +  # noqa: RUF012
-                           loc for loc in TID}
+    location_name_to_id = _build_loc_mappings()
+    item_name_to_id = _build_item_mappings()
 
     _item_name_to_rdi_type: typing.ClassVar[dict[str, ItemID]] = {str(x): x for x in ItemID}
+
 
     def __init__(self, world: MultiWorld, player: int):
         super().__init__(world, player)
@@ -148,7 +175,6 @@ class CTRDIWorld(World):
         # TODO: Pass the encoded name into the rando to be stored
         #       in the player validation nmemory
 
-
         self._translate_settings()
         base_rom = ctrom.CTRom.from_file(self.get_rom_path())
         self.ct_rom = randomizer.ctrom.CTRom(base_rom.getvalue())
@@ -169,6 +195,7 @@ class CTRDIWorld(World):
         for loc, value in self.config.treasure_assignment.items():
 
             if loc in _locs_to_skip:
+                # Skip trading post since we can't track that
                 continue
 
             if isinstance(value, tty.Gold):
@@ -176,8 +203,14 @@ class CTRDIWorld(World):
                 #       I'm not sure it's possible to send arbitrary numbers
                 #       for gold rewards, so maybe leave gold chests local?
                 pass
+            elif isinstance(value, tty.TechLevelReward):
+                character = value.char_id
+                item_name = f"{character!s}_tech_level"
+                item_id = self._item_name_to_id[item_name]
+                ap_item = Item(item_name, ItemClassification.useful, item_id, self.player)
+                items.append(ap_item)
+            #TODO: Character rewards
             else:
-                # TODO: Handle tech level reward
                 items.append(self._create_ap_item(value))
 
         self.multiworld.itempool += items
@@ -299,8 +332,7 @@ class CTRDIWorld(World):
                         self._create_event_loc_item_pair(
                             char_name, ap_region)
 
-    def _create_locations_for_regions(
-            self, region_dict: dict[str, RegionData]):
+    def _create_locations_for_regions(self, region_dict: dict[str, RegionData]):
         """
         Create corresponding locations for each RDI location and
         attach them to the appropriate regions.
@@ -319,33 +351,35 @@ class CTRDIWorld(World):
                                            ItemClassification.trap]
 
         for region_data in region_dict.values():
-            if isinstance(region_data.rdi_region, LocRegion):
-                for loc in region_data.rdi_region.reward_spots:
-                    if isinstance(loc, TID):
-                        if loc in _locs_to_skip:
-                            continue
+            if not isinstance(region_data.rdi_region, LocRegion):
+                continue
 
-                        if isinstance(self.config.treasure_assignment[loc], tty.Gold):
-                            continue
+            for loc in region_data.rdi_region.reward_spots:
+                if isinstance(loc, TID):
+                    if loc in _locs_to_skip:
+                        continue
 
-                        location = Location(
-                            self.player, str(loc), self.location_name_to_id[str(loc)], region_data.ap_region)
-                        region_data.ap_region.locations.append(location)
-                        location.access_rule = lambda state: True
+                    if isinstance(self.config.treasure_assignment[loc], tty.Gold):
+                        continue
 
-                        if len(progression_spots) > 0:
-                            # If there are no progressio spots then the user wants full
-                            # chronosanity mode minus the excluded spots
-                            # If there are progression spots specified then we need to
-                            # set up the item rules accordingly
-                            if loc not in progression_spots and loc not in excluded_spots:
-                                # limit item classification for non-forced and non-incentive spots
-                                location.item_rule = non_progression
+                    location = Location(
+                        self.player, str(loc), self.location_name_to_id[str(loc)], region_data.ap_region)
+                    region_data.ap_region.locations.append(location)
+                    location.access_rule = lambda state: True
 
-                        if loc in excluded_spots:
-                            # Limit exluded spots to only filler items and traps
-                            # These are usually missable locations so don't put anything good there
-                            location.item_rule = junk_only
+                    if len(progression_spots) > 0:
+                        # If there are no progressio spots then the user wants full
+                        # chronosanity mode minus the excluded spots
+                        # If there are progression spots specified then we need to
+                        # set up the item rules accordingly
+                        if loc not in progression_spots and loc not in excluded_spots:
+                            # limit item classification for non-forced and non-incentive spots
+                            location.item_rule = non_progression
+
+                    if loc in excluded_spots:
+                        # Limit exluded spots to only filler items and traps
+                        # These are usually missable locations so don't put anything good there
+                        location.item_rule = junk_only
 
 
     def _create_region_map(self) -> dict[str, RegionData]:
@@ -496,7 +530,7 @@ class CTRDIWorld(World):
 
                     if isinstance(value, Range):
                         value = value.value
-                        if spec.type_fn is not int:
+                        if spec.type_fn is not int:  # pyright: ignore[reportAttributeAccessIssue]
                             value = float(value / 100.0)
 
                     if isinstance(value, OptionList):
@@ -509,8 +543,19 @@ class CTRDIWorld(World):
                     else:
                         data_dict[flag_name] = value
 
-        #print(data_dict)
-        #args = tomloptions.toml_data_to_args({})
+
+        # TODO: Trading post spots will have flags soon,
+        #       so this is just a temp fix to remove them
+        #       while they are causing issues.
+        import ctrando.arguments.arguments
+        arg_specs = ctrando.arguments.arguments.Settings.get_argument_spec()
+        spec = arg_specs["logic_options"]["excluded_spots"]  # pyright: ignore[reportIndexIssue]
+        for loc in _locs_to_skip:
+            data_dict["excluded_spots"].append(spec.str_from_choice_fn(loc))  # pyright: ignore[reportAttributeAccessIssue]
+
+        # Enable multiworld support in the randomizer
+        data_dict["general_options"]["multiworld"] = True
+
         args = tomloptions.toml_data_to_args(data_dict)
         self.rdi_settings = randomizer.extract_settings(*args)
 
@@ -544,6 +589,6 @@ class CTRDIWorld(World):
                 raise Exception(
                     "Supplied base ROM does not match the known MD5 hash")
 
-            CTRDIWorld.get_base_rom_bytes.base_rom_bytes = base_rom_bytes
+            CTRDIWorld.get_base_rom_bytes.base_rom_bytes = base_rom_bytes  # pyright: ignore[reportFunctionMemberAccess]
 
         return base_rom_bytes
