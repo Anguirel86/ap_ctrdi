@@ -6,23 +6,17 @@ import logging
 import os
 import typing
 from collections.abc import Callable
-from dataclasses import dataclass
 
 import ctrando.treasures.treasuretypes as tty
 
 # RDI randomizer imports
 from ctrando import randomizer
 from ctrando.arguments import arguments, argumenttypes, tomloptions
-from ctrando.bosses.bosstypes import BossSpotID
 from ctrando.common import ctenums, ctrom, memory, randostate
-from ctrando.common.ctenums import ItemID, RecruitID
-from ctrando.common.ctenums import TreasureID as TID  # noqa: N817
-from ctrando.entranceshuffler import entrancefiller
-from ctrando.entranceshuffler.locregions import LocRegion
-from ctrando.entranceshuffler.owregions import OWRegion
-from ctrando.entranceshuffler.regionmap import ExitConnector, RegionConnector
+from ctrando.common.ctenums import ItemID, TreasureID
 from ctrando.logic import logictypes
-from ctrando.objectives import objectivetypes as objty
+from ctrando.strings import ctstrings
+from ctrando.base import multiworld
 
 # Archipelago imports
 import settings
@@ -33,6 +27,7 @@ from Utils import read_snes_rom
 from worlds.AutoWorld import WebWorld, World
 
 # Local APWorld imports
+from . import Items, Locations
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
@@ -43,9 +38,6 @@ from .Options import CTRDIOptions, option_groups
 
 rdi_logger = logging.getLogger("RDI")
 
-# TODO: Pick a real item ID offset
-# Offset to give CTRDI items a unique item range in AP
-ITEM_ID_BASE = 50_350_000
 CTUSA_MD5_HASH = "a2bc447961e52fd2227baed164f729dc"
 
 
@@ -81,56 +73,6 @@ class CTRDIWebWorld(WebWorld):
     option_groups = option_groups
 
 
-@dataclass
-class RegionData:
-    """Store corresponding RDI and AP region definitions"""
-    rdi_region: LocRegion | OWRegion
-    ap_region: Region
-
-# NOTE: Trading post locations are not included for now since they can't be tracked.
-#       If/when flags get added for them we can add them back.
-_locs_to_skip: list[TID] = [
-    TID.TRADING_POST_PETAL_FANG_BASE,
-    TID.TRADING_POST_PETAL_FANG_UPGRADE,
-    TID.TRADING_POST_PETAL_FANG_UPGRADE,
-    TID.TRADING_POST_PETAL_HORN_BASE,
-    TID.TRADING_POST_PETAL_HORN_UPGRADE,
-    TID.TRADING_POST_PETAL_FEATHER_BASE,
-    TID.TRADING_POST_PETAL_FEATHER_UPGRADE,
-    TID.TRADING_POST_FANG_HORN_BASE,
-    TID.TRADING_POST_FANG_HORN_UPGRADE,
-    TID.TRADING_POST_FANG_FEATHER_BASE,
-    TID.TRADING_POST_FANG_FEATHER_UPGRADE,
-    TID.TRADING_POST_HORN_FEATHER_BASE,
-    TID.TRADING_POST_HORN_FEATHER_UPGRADE,
-    TID.TRADING_POST_SPECIAL
-]
-
-
-def _build_item_mappings() -> dict[str, int]:
-    """
-    Build the item and location name-to-ID mappings.
-    Also adds 7 character items and their associated tech level items
-    """
-    item_name_to_id = {str(item): ITEM_ID_BASE + item for item in ItemID}
-
-    # Add 7 character items and tech level items
-    char_names = ["Crono", "Marle", "Lucca", "Robo", "Frog", "Ayla", "Magus"]
-    tech_level_names = [f"tech_level_{i}" for i in range(7)]
-
-    # Add character items
-    for i, name in enumerate(char_names):
-        item_name_to_id[name] = ITEM_ID_BASE + 0x100 + i
-
-    # Add tech level items
-    for i, name in enumerate(tech_level_names):
-        item_name_to_id[name] = ITEM_ID_BASE + 0x110 + i
-
-    return item_name_to_id
-
-def _build_loc_mappings() -> dict[str, int]:
-    return {str(loc): ITEM_ID_BASE + loc for loc in TID}
-
 class CTRDIWorld(World):
     """
     TODO: CTRDI description here
@@ -148,8 +90,8 @@ class CTRDIWorld(World):
     rdi_settings: arguments.Settings
     config: randostate.ConfigState
 
-    location_name_to_id = _build_loc_mappings()
-    item_name_to_id = _build_item_mappings()
+    location_name_to_id = Locations.build_loc_mappings()
+    item_name_to_id = Items.build_item_mappings()
 
     _item_name_to_rdi_type: typing.ClassVar[dict[str, ItemID]] = {str(x): x for x in ItemID}
 
@@ -170,8 +112,8 @@ class CTRDIWorld(World):
         in subsequent stages to create items/regions/etc for the multiworld.
         """
         player_name = self.multiworld.player_name[self.player]
-        hashed_name = hash(player_name).to_bytes(8, signed=True)
-        self.encoded_name = base64.b64encode(hashed_name).decode()
+        self.hashed_name = hash(player_name).to_bytes(8, signed=True)
+        self.encoded_name = base64.b64encode(self.hashed_name).decode()
         # TODO: Pass the encoded name into the rando to be stored
         #       in the player validation nmemory
 
@@ -185,34 +127,13 @@ class CTRDIWorld(World):
         """
         Create an AP item from the named RDI item.
         """
-        return self._create_ap_item(self._item_name_to_RDI_type[name])
+        return Items.create_ap_item(self._item_name_to_RDI_type[name], self.player)
 
     def create_items(self) -> None:
         """
         Create the multiworld items for this player
         """
-        items = []
-        for loc, value in self.config.treasure_assignment.items():
-
-            if loc in _locs_to_skip:
-                # Skip trading post since we can't track that
-                continue
-
-            if isinstance(value, tty.Gold):
-                # TODO: Handle gold rewards
-                #       I'm not sure it's possible to send arbitrary numbers
-                #       for gold rewards, so maybe leave gold chests local?
-                pass
-            elif isinstance(value, tty.TechLevelReward):
-                character = value.char_id
-                item_name = f"{character!s}_tech_level"
-                item_id = self._item_name_to_id[item_name]
-                ap_item = Item(item_name, ItemClassification.useful, item_id, self.player)
-                items.append(ap_item)
-            #TODO: Character rewards
-            else:
-                items.append(self._create_ap_item(value))
-
+        items = Items.create_items(self.config, self.player)
         self.multiworld.itempool += items
 
     def create_regions(self) -> None:
@@ -220,19 +141,19 @@ class CTRDIWorld(World):
         Create regions and locations for this player
         """
         # Create regions and connecting exits
-        region_dict = self._create_region_map()
+        region_dict = Locations.create_region_map(self.config, self.multiworld, self.player)
 
         # Create treasure locations and game/logic event locations
-        self._create_locations_for_regions(region_dict)
-        self._create_recruit_events(region_dict)
-        self._create_flag_events(region_dict)
+        Locations.create_locations_for_regions(region_dict, self.config, self.rdi_settings, self.player)
+        Locations.create_recruit_events(region_dict, self.config, self.player)
+        Locations.create_flag_events(region_dict, self.config, self.player)
 
         # Create victory location
         menu_region = region_dict[self.origin_region_name].ap_region
         victory_loc = Location(self.player, "Victory", None, menu_region)
         victory_loc.place_locked_item(
             Item("Victory", ItemClassification.progression, None, self.player))
-        victory_loc.access_rule = self._create_victory_rule()
+        victory_loc.access_rule = Locations.create_victory_rule(self.player, self.rdi_settings)
         menu_region.locations.append(victory_loc)
         self.multiworld.completion_condition[self.player] = \
             lambda state: state.has("Victory", self.player)
@@ -240,197 +161,6 @@ class CTRDIWorld(World):
         # Add all regions to the multiworld object
         self.multiworld.regions += [x.ap_region for x in region_dict.values()]
 
-    def _create_victory_rule(self) -> Callable[[CollectionState], bool]:
-        """
-        Create a victory rule for this game.
-        Victory occurs when the player has completed the required objectives
-        and collected the right items/characters to reach and defeat Lavos.
-        """
-
-        def victory_rule(state: CollectionState) -> bool:
-            # Get objective count
-            obj_tokens = ["Objective 1", "Objective 2",
-                          "Objective 3", "Objective 4",
-                          "Objective 5", "Objective 6",
-                          "Objective 7", "Objective 8"]
-
-            num_objs_complete = 0
-            for obj in obj_tokens:
-                if state.has(obj, self.player):
-                    num_objs_complete = num_objs_complete + 1
-
-            # Objective based access
-            algetty_portal_open = num_objs_complete >= self.rdi_settings.objective_options.num_algetty_portal_objectives
-            omen_open = num_objs_complete >= self.rdi_settings.objective_options.num_omen_objectives
-            bucket_open = num_objs_complete >= self.rdi_settings.objective_options.num_bucket_objectives
-            timegauge_1999_open = num_objs_complete >= self.rdi_settings.objective_options.num_timegauge_objectives
-
-            # Location access
-            has_eot = state.has(
-                str(memory.Flags.HAS_EOT_TIMEGAUGE_ACCESS), self.player)
-
-            # Build up the access rules to lavos
-            # End of Time -> Bucket
-            if has_eot and bucket_open:
-                return True
-
-            # Hard Lavos
-            # TODO: Do we actually want to include this in logic?
-            #       I think this is actually an option
-            ocean_palace_access = state.has(
-                str(objty.QuestID.ZEAL_PALACE_THRONE), self.player)
-            ruby_knife = state.has(str(ItemID.RUBY_KNIFE), self.player)
-            if ocean_palace_access and ruby_knife:
-                return True
-
-            # Crash Epoch into lavos in 1999
-            has_flight = state.has(
-                str(logictypes.ScriptReward.FLIGHT), self.player)
-            if has_flight and timegauge_1999_open:
-                return True
-
-            # Black Omen
-            if has_flight and algetty_portal_open and omen_open:
-                return True
-
-            return False
-
-        return victory_rule
-
-    def _create_flag_events(self, region_dict: dict[str, RegionData]):
-        """
-        Create event items/locations for script and memory flag rewards.
-        These are used internally by the logic rules to gate access by some
-        in-game event rather than holding an item or character.
-
-        Ignore shop rewards
-        """
-        for loc_region in self.config.region_map.loc_region_dict.values():
-            reward_list = \
-                list(loc_region.reward_spots) + loc_region.region_rewards
-            for reward in reward_list:
-                if isinstance(reward, logictypes.ScriptReward) or \
-                        isinstance(reward, logictypes.StrangeReward) or \
-                        isinstance(reward, memory.Flags) or \
-                        isinstance(reward, BossSpotID) or \
-                        isinstance(reward, ItemID):
-
-                    self._create_event_loc_item_pair(
-                        str(reward), region_dict[loc_region.name].ap_region)
-
-    def _create_recruit_events(self, region_dict: dict[str, RegionData]):
-        """
-        Create event locations and event items for character recruitment.
-        """
-        for loc_region in self.config.region_map.loc_region_dict.values():
-            for reward in loc_region.reward_spots:
-                if isinstance(reward, RecruitID):
-                    # Found a recruit spot
-                    for character in self.config.recruit_dict[reward]:
-                        char_name = str(character)
-                        ap_region = region_dict[loc_region.name].ap_region
-                        self._create_event_loc_item_pair(
-                            char_name, ap_region)
-
-    def _create_locations_for_regions(self, region_dict: dict[str, RegionData]):
-        """
-        Create corresponding locations for each RDI location and
-        attach them to the appropriate regions.
-        """
-        progression_spots = list(self.rdi_settings.logic_options.forced_spots) + \
-                            list(self.rdi_settings.logic_options.incentive_spots)
-        excluded_spots = self.rdi_settings.logic_options.excluded_spots
-
-        def non_progression(item):
-            return item.classification in [ItemClassification.filler,
-                                           ItemClassification.useful,
-                                           ItemClassification.trap]
-
-        def junk_only(item):
-            return item.classification in [ItemClassification.filler,
-                                           ItemClassification.trap]
-
-        for region_data in region_dict.values():
-            if not isinstance(region_data.rdi_region, LocRegion):
-                continue
-
-            for loc in region_data.rdi_region.reward_spots:
-                if isinstance(loc, TID):
-                    if loc in _locs_to_skip:
-                        continue
-
-                    if isinstance(self.config.treasure_assignment[loc], tty.Gold):
-                        continue
-
-                    location = Location(
-                        self.player, str(loc), self.location_name_to_id[str(loc)], region_data.ap_region)
-                    region_data.ap_region.locations.append(location)
-                    location.access_rule = lambda state: True
-
-                    if len(progression_spots) > 0:
-                        # If there are no progressio spots then the user wants full
-                        # chronosanity mode minus the excluded spots
-                        # If there are progression spots specified then we need to
-                        # set up the item rules accordingly
-                        if loc not in progression_spots and loc not in excluded_spots:
-                            # limit item classification for non-forced and non-incentive spots
-                            location.item_rule = non_progression
-
-                    if loc in excluded_spots:
-                        # Limit exluded spots to only filler items and traps
-                        # These are usually missable locations so don't put anything good there
-                        location.item_rule = junk_only
-
-
-    def _create_region_map(self) -> dict[str, RegionData]:
-        """
-        Create a corresponding AP Region definition for every RDI region
-        and wire up the exits
-        """
-        region_dict: dict[str, RegionData] = {}
-
-        for name in self.config.region_map.name_connector_dict.keys():
-            if name in self.config.region_map.ow_region_dict:
-                rdi_region = self.config.region_map.ow_region_dict[name]
-            elif name in self.config.region_map.loc_region_dict:
-                rdi_region = self.config.region_map.loc_region_dict[name]
-            else:
-                raise Exception(f"Region not found: {name}")
-
-            ap_region = Region(name, self.player, self.multiworld)
-            region_dict[name] = RegionData(
-                rdi_region=rdi_region, ap_region=ap_region)
-
-        # Now that all regions are created, connect them up
-        # based on the exit layout in the rando config
-        for connectors in self.config.region_map.name_connector_dict.values():
-
-            for connector in connectors:
-                from_region = region_dict[connector.from_region_name]
-                to_region = region_dict[connector.to_region_name]
-
-                # Create the exit and set up its rule
-                exit_name = f"{connector.link_name}-{connector.from_region_name}-{connector.to_region_name}"
-                exit_obj = from_region.ap_region.create_exit(exit_name)
-                access_rule = self._create_access_rule(connector)
-                exit_obj.access_rule = access_rule
-                exit_obj.connect(to_region.ap_region)
-
-        return region_dict
-
-    def _create_event_loc_item_pair(self, name: str, region: Region):
-        """
-        Create an event location with a locked event item
-        """
-        item = Item(name,
-                    ItemClassification.progression,
-                    None,
-                    self.player)
-
-        loc_name = f"{region.name}-{name}"
-        loc = Location(self.player, loc_name, None, region)
-        loc.place_locked_item(item)
-        region.locations.append(loc)
 
     def get_filler_item_name(self) -> str:
         """
@@ -438,6 +168,7 @@ class CTRDIWorld(World):
         """
         # TODO: Real filler items - Ideally this will never be needed
         return str(ctenums.ItemID.MOP)
+
 
     def modify_multidata(self, multidata):
         player_name = self.multiworld.player_name[self.player]
@@ -448,8 +179,15 @@ class CTRDIWorld(World):
         """
         Generate the randomized ROM and create the patch file
         """
+
+        # Get all items placed in this game world and write
+        # the player and item data back to the RDI config
+        self._modify_rom_treasures()
+
         out_rom = randomizer.get_ctrom_from_config(
             self.ct_rom, self.rdi_settings, self.config)
+
+        multiworld.write_player_validation_data(out_rom, self.hashed_name)
 
         basename = self.multiworld.get_out_file_name_base(self.player)
         output_path = os.path.join(output_directory, f"{basename}.sfc")
@@ -467,50 +205,6 @@ class CTRDIWorld(World):
         patch.write()
         os.unlink(output_path)
 
-    def _create_access_rule(
-        self,
-        connector: RegionConnector | ExitConnector
-    ) -> Callable[[CollectionState], bool]:
-        """
-        Get an AP access rule from a RDI connector object
-        """
-        # Trivial case, always available
-        # An list containint an empty list of single access rules
-        if not connector.rule.get_access_rule()[0]:
-            return lambda state: True
-
-        # Convert the RDI rule to an AP rule
-        def can_access(state: CollectionState) -> bool:
-
-            for single_rule in connector.rule.get_access_rule():
-
-                satisfies_rule = True
-                for item in single_rule:
-                    count = single_rule.count(item)
-                    if not state.has(str(item), self.player, count):
-                        # At least one condition of this rule isn't met
-                        satisfies_rule = False
-
-                if satisfies_rule:
-                    return True
-
-            return False
-
-        return can_access
-
-    def _create_ap_item(self, item: ctenums.ItemID) -> Item:
-        """
-        Create an AP item from a CTRDI ItemID
-        """
-        # TODO: Handle item classification for additional key items
-        if item in entrancefiller.get_forced_key_items():
-            classification = ItemClassification.progression
-        else:
-            classification = ItemClassification.filler
-        # TODO: Additional classifications? Useful?
-
-        item_code = ITEM_ID_BASE + item
-        return Item(str(item), classification, item_code, self.player)
 
     def _translate_settings(self):
         """
@@ -550,14 +244,42 @@ class CTRDIWorld(World):
         import ctrando.arguments.arguments
         arg_specs = ctrando.arguments.arguments.Settings.get_argument_spec()
         spec = arg_specs["logic_options"]["excluded_spots"]  # pyright: ignore[reportIndexIssue]
-        for loc in _locs_to_skip:
+        for loc in Locations.locs_to_skip:
             data_dict["excluded_spots"].append(spec.str_from_choice_fn(loc))  # pyright: ignore[reportAttributeAccessIssue]
 
         # Enable multiworld support in the randomizer
+        data_dict["general_options"] = {}
         data_dict["general_options"]["multiworld"] = True
 
         args = tomloptions.toml_data_to_args(data_dict)
         self.rdi_settings = randomizer.extract_settings(*args)
+
+    def _modify_rom_treasures(self):
+        """
+        Write treasure data back to the config.
+        """
+        filled = self.multiworld.get_filled_locations(self.player)
+        for loc in filled:
+            # get_filled_locations guarantees there is an item here
+            is_local = loc.item.player == self.player  # pyright: ignore[reportOptionalMemberAccess]
+
+            if loc.address is None:
+                continue
+
+            tid = Locations.get_tid_from_address(loc.address)
+
+            rdi_logger.info(f"Location: {tid!s} - {loc.item.name}: is_local? {is_local}")
+
+            if is_local:
+                # Replace the reward here with whatever AP chose.
+                # TODO: Char/tech levels
+                item_id = self._item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
+                self.config.treasure_assignment[tid] = item_id
+            else:
+                # Replace reward here with the AP treasure type
+                item_name = ctstrings.pre_process_string(loc.item.name)
+                player_name = ctstrings.pre_process_string(self.multiworld.player_name[loc.item.player])
+                self.config.treasure_assignment[tid] = tty.APReward(item_name, player_name)
 
     @staticmethod
     def get_rom_path() -> str:
