@@ -8,8 +8,9 @@ from ctrando.common.memory import Flags
 from ctrando.treasures import treasuretypes
 
 from NetUtils import ClientStatus
-from SNIClient import SNIContext, snes_buffered_write, snes_flush_writes, snes_read
 from worlds.AutoSNIClient import SNIClient
+
+from . import Locations
 
 snes_logger = logging.getLogger("SNES")
 
@@ -24,15 +25,13 @@ SRAM_START = 0xE00000
 
 # RDI constants
 # NOTE: Addresses are in SNES addressing, not SNI addressing
-# TODO: Update JoT values with RDI values
-#       Received item count needs to be 2 bytes
 EVENT_BLOCK_SIZE = 0x200
 EVENT_BASE_ADDR = 0x7F0000
 TREASURE_BASE_ADDR = 0x7F0001
 RECEIVED_ITEM_ADDR = 0x7F0039
 RECEIVED_ITEM_CNT = 0x7F003B
-VICTORY_ADDR = 0x00  # TODO: Get real victory flag ADDR
-VICTORY_FLAG = 0x01  # TODO: Get real victory flag bit
+VICTORY_ADDR = 0x7F0021
+VICTORY_FLAG = 0x01
 
 LOCATION_ADDR = 0xF50100  # Already in SNI address space
 
@@ -238,13 +237,14 @@ class CTRDIClient(SNIClient):
             raise Exception(f"Unknown location: {loc!s}")
 
         check_data = _script_locations[loc]
-        offset = check_data.address - EVENT_BASE_ADDR
         if isinstance(check_data, Flags):
             # Standard memory flag
-            return event_data[offset] & check_data.bit
+            offset = check_data.value.address - EVENT_BASE_ADDR
+            return event_data[offset] & check_data.value.bit
 
         if isinstance(check_data, CheckCounter):
             # Counter type check
+            offset = check_data.address - EVENT_BASE_ADDR
             return event_data[offset] >= check_data.count
 
         raise Exception(f"Unknown check type for {check_data!s}")
@@ -286,7 +286,7 @@ class CTRDIClient(SNIClient):
 
     def _track_locations(
             self,
-            ctx: SNIContext,
+            ctx,
             event_data: bytes) -> list[int]:
         """
         Track which locations the player has collected.
@@ -294,6 +294,8 @@ class CTRDIClient(SNIClient):
         new_locations: list[int] = []
         for loc, treasure in treasuretypes.get_base_treasure_dict().items():
             loc_id = self._loc_name_to_id[str(loc)]
+            if Locations.loc_id_to_tid[loc_id] in Locations.locs_to_skip:
+                continue
             if loc_id not in ctx.checked_locations and loc_id not in new_locations:
                 if isinstance(treasure, treasuretypes.ChestTreasure):
                     if self._is_chest_collected(event_data, treasure.chest_index):
@@ -307,11 +309,12 @@ class CTRDIClient(SNIClient):
 
 
     @classmethod
-    async def _get_next_item_to_deliver(cls, ctx: SNIContext) -> tuple[bool, int]:
+    async def _get_next_item_to_deliver(cls, ctx) -> tuple[bool, int]:
         """
         Check if we have any items awaiting delivery and if so, return
         the (AP) ID of that item.
         """
+        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
         item_cnt_buf = await snes_read(
             ctx, cls._to_sni(RECEIVED_ITEM_CNT), 2)
         if item_cnt_buf is None:
@@ -328,11 +331,12 @@ class CTRDIClient(SNIClient):
 
 
     @classmethod
-    async def _game_ready_for_delivery(cls, ctx: SNIContext) -> bool:
+    async def _game_ready_for_delivery(cls, ctx) -> bool:
         """
         Check the delivery buffer address to see if the game
         is ready for another item to be delivered.
         """
+        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
         delivery_buf = await snes_read(
             ctx, cls._to_sni(RECEIVED_ITEM_ADDR), 2)
         if delivery_buf is None:
@@ -373,7 +377,7 @@ class CTRDIClient(SNIClient):
         raise Exception(f"Unknown item ID {local_item_id}")
 
     @classmethod
-    async def _try_deliver_next_item(cls, ctx: SNIContext):
+    async def _try_deliver_next_item(cls, ctx):
         """
         Deliver the next item if there are any available.
 
@@ -382,6 +386,7 @@ class CTRDIClient(SNIClient):
         If so, then deliver the next one.
         """
 
+        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
         # Check the item delivery buffer. If it is not empty, then
         # the game is still busy delivering the previous item.
         game_ready = await cls._game_ready_for_delivery(ctx)
@@ -412,7 +417,7 @@ class CTRDIClient(SNIClient):
             game_item_id.to_bytes(2, byteorder="little"))
         await snes_flush_writes(ctx)
 
-    async def _handle_victory_condition(self, ctx: SNIContext, event_data: bytes):
+    async def _handle_victory_condition(self, ctx, event_data: bytes):
         """
         Check if the player has achieved the goal.
         """
@@ -425,9 +430,9 @@ class CTRDIClient(SNIClient):
             await ctx.send_msgs(
                 [{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
-    @override
-    async def validate_rom(self, ctx: SNIContext) -> bool:
+    async def validate_rom(self, ctx) -> bool:
 
+        from SNIClient import snes_read
         data = await snes_read(ctx, VALIDATION_ADDR, VALIDATION_SIZE)
         if data is None or data[0:5] != b"APRDI":
             return False
@@ -444,8 +449,9 @@ class CTRDIClient(SNIClient):
         return True
 
     @override
-    async def game_watcher(self, ctx: SNIContext) -> None:
+    async def game_watcher(self, ctx) -> None:
 
+        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
         if not ctx.allow_collect or ctx.server is None or ctx.slot is None:
             # Client isn't fully connected yet
             return
@@ -472,7 +478,7 @@ class CTRDIClient(SNIClient):
             await self._handle_victory_condition(ctx, event_data)
 
     @override
-    async def deathlink_kill_player(self, ctx: SNIContext) -> None:
+    async def deathlink_kill_player(self, ctx) -> None:
         """
         Not implmented for RDI
         """

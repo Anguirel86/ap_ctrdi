@@ -2,11 +2,12 @@
 Item package to handle functions and logic related to
 items and item placement in RDI.
 """
+import typing
 
 import ctrando.treasures.treasuretypes as tty
+from ctrando.common import randostate
 from ctrando.common.ctenums import ItemID
 from ctrando.entranceshuffler import entrancefiller
-from ctrando.common import randostate
 
 from BaseClasses import Item, ItemClassification
 
@@ -16,7 +17,7 @@ from .Locations import locs_to_skip
 """Offset to give CTRDI items a unique item range in AP"""
 ITEM_ID_BASE = 50_350_000
 
-def build_item_mappings() -> dict[str, int]:
+def _build_item_mappings() -> dict[str, int]:
     """
     Build the item and location name-to-ID mappings.
     Also adds 7 character items and their associated tech level items
@@ -37,7 +38,8 @@ def build_item_mappings() -> dict[str, int]:
 
     return item_name_to_id
 
-_item_name_to_id = build_item_mappings()
+item_name_to_id = _build_item_mappings()
+item_name_to_rdi_type: dict[str, ItemID] = {str(x): x for x in ItemID}
 
 def create_items(config: randostate.ConfigState, player: int) -> list[Item]:
     """
@@ -58,12 +60,12 @@ def create_items(config: randostate.ConfigState, player: int) -> list[Item]:
         elif isinstance(value, tty.TechLevelReward):
             character = value.char_id
             item_name = f"{character!s}_tech_level"
-            item_id = _item_name_to_id[item_name]
+            item_id = item_name_to_id[item_name]
             ap_item = Item(item_name, ItemClassification.useful, item_id, player)
             items.append(ap_item)
         #TODO: Character rewards
         else:
-            items.append(create_ap_item(value, player))
+            items.append(create_ap_item(value, player))  # pyright: ignore[reportArgumentType]
 
     return items
 

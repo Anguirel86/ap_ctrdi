@@ -14,7 +14,6 @@ from ctrando.entranceshuffler.locregions import LocRegion
 from ctrando.entranceshuffler.owregions import OWRegion
 from ctrando.entranceshuffler.regionmap import ExitConnector, RegionConnector
 from ctrando.logic import logictypes
-from ctrando.objectives import objectivetypes as objty
 
 from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region
 
@@ -38,7 +37,7 @@ locs_to_skip: list[TreasureID] = [
     TreasureID.TRADING_POST_FANG_FEATHER_UPGRADE,
     TreasureID.TRADING_POST_HORN_FEATHER_BASE,
     TreasureID.TRADING_POST_HORN_FEATHER_UPGRADE,
-    TreasureID.TRADING_POST_SPECIAL
+    TreasureID.TRADING_POST_SPECIAL,
 ]
 
 @dataclass
@@ -47,19 +46,14 @@ class RegionData:
     rdi_region: LocRegion | OWRegion
     ap_region: Region
 
-def build_loc_mappings() -> dict[str, int]:
-    return {str(loc): LOC_ID_BASE + loc for loc in TreasureID}
-
-_location_name_to_id = build_loc_mappings()
-_loc_id_to_tid = {x + LOC_ID_BASE: x for x in TreasureID}
-
-
+location_name_to_id = {str(loc): LOC_ID_BASE + loc for loc in TreasureID}
+loc_id_to_tid = {x + LOC_ID_BASE: x for x in TreasureID}
 
 def get_tid_from_address(addr: int) -> TreasureID:
     """
     Get the RDI treasure ID from a location address.
     """
-    return _loc_id_to_tid[addr]
+    return loc_id_to_tid[addr]
 
 def create_victory_rule(player: int, rdi_settings: arguments.Settings) -> Callable[[CollectionState], bool]:
     """
@@ -196,7 +190,7 @@ def create_locations_for_regions(
                     continue
 
                 location = Location(
-                    player, str(loc), _location_name_to_id[str(loc)], region_data.ap_region)
+                    player, str(loc), location_name_to_id[str(loc)], region_data.ap_region)
                 region_data.ap_region.locations.append(location)
                 location.access_rule = lambda state: True
 

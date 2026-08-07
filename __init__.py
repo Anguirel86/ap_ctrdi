@@ -5,35 +5,32 @@ import hashlib
 import logging
 import os
 import typing
-from collections.abc import Callable
-
-import ctrando.treasures.treasuretypes as tty
 
 # RDI randomizer imports
+import ctrando.treasures.treasuretypes as tty
 from ctrando import randomizer
 from ctrando.arguments import arguments, argumenttypes, tomloptions
-from ctrando.common import ctenums, ctrom, memory, randostate
-from ctrando.common.ctenums import ItemID, TreasureID
-from ctrando.logic import logictypes
-from ctrando.strings import ctstrings
 from ctrando.base import multiworld
+from ctrando.common import ctenums, ctrom, randostate
+from ctrando.common.ctenums import ItemID
+from ctrando.strings import ctstrings
 
 # Archipelago imports
 import settings
 import worlds
-from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region, Tutorial
+from BaseClasses import Item, ItemClassification, Location, MultiWorld, Tutorial
 from Options import Choice, OptionList, Range, Toggle
 from Utils import read_snes_rom
 from worlds.AutoWorld import WebWorld, World
 
 # Local APWorld imports
 from . import Items, Locations
+from .Client import CTRDIClient  # pyright: ignore[reportUnusedImport]
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
 #  - Handle tech level rewards
 #  - Create tutorial docs
-#  - General organization/cleanup pass, add helper classes, etc
 
 
 rdi_logger = logging.getLogger("RDI")
@@ -75,7 +72,10 @@ class CTRDIWebWorld(WebWorld):
 
 class CTRDIWorld(World):
     """
-    TODO: CTRDI description here
+    Rando-Dalton Imperial is a highly customizable open world randomizer for
+    the SNES version of Chrono Trigger. It focuses on retaining as much of
+    the vanilla experience as possible but offers a wide array of options
+    to allow the player to tailor their play experience however they want.
     """
     game = "Chrono Trigger Rando-Dalton Imperial"
     topology_present = True
@@ -90,8 +90,8 @@ class CTRDIWorld(World):
     rdi_settings: arguments.Settings
     config: randostate.ConfigState
 
-    location_name_to_id = Locations.build_loc_mappings()
-    item_name_to_id = Items.build_item_mappings()
+    location_name_to_id = Locations.location_name_to_id
+    item_name_to_id = Items.item_name_to_id
 
     _item_name_to_rdi_type: typing.ClassVar[dict[str, ItemID]] = {str(x): x for x in ItemID}
 
@@ -172,8 +172,7 @@ class CTRDIWorld(World):
 
     def modify_multidata(self, multidata):
         player_name = self.multiworld.player_name[self.player]
-        multidata["connect_names"][self.encoded_name] = \
-            multidata["connect_names"][player_name]
+        multidata["connect_names"][self.encoded_name] = multidata["connect_names"][player_name]
 
     def generate_output(self, output_directory: str):
         """
@@ -188,6 +187,7 @@ class CTRDIWorld(World):
             self.ct_rom, self.rdi_settings, self.config)
 
         multiworld.write_player_validation_data(out_rom, self.hashed_name)
+        rdi_logger.info(f"Hashed name: {self.hashed_name}")
 
         basename = self.multiworld.get_out_file_name_base(self.player)
         output_path = os.path.join(output_directory, f"{basename}.sfc")
@@ -268,12 +268,10 @@ class CTRDIWorld(World):
 
             tid = Locations.get_tid_from_address(loc.address)
 
-            rdi_logger.info(f"Location: {tid!s} - {loc.item.name}: is_local? {is_local}")
-
             if is_local:
                 # Replace the reward here with whatever AP chose.
                 # TODO: Char/tech levels
-                item_id = self._item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
+                item_id = Items.item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
                 self.config.treasure_assignment[tid] = item_id
             else:
                 # Replace reward here with the AP treasure type
