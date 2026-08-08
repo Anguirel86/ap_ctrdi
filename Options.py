@@ -48,7 +48,7 @@ class XpPenaltyPercent(Range):
 
 
 class LevelCap(Range):
-    """Levels beyond the level cap will have prohibitively large requirements."""
+    """Levels can not be gained beyond this cap."""
     display_name = "Level Cap"
     range_start = 1
     range_end = 99
@@ -97,7 +97,6 @@ class DropRewardPool(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -143,7 +142,6 @@ class DropRewardPool2(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -189,7 +187,6 @@ class DropRewardPool3(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -235,7 +232,6 @@ class DropRewardPool4(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -286,7 +282,6 @@ class CharmRewardPool(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -332,7 +327,6 @@ class CharmRewardPool2(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -378,7 +372,6 @@ class CharmRewardPool3(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -424,7 +417,6 @@ class CharmRewardPool4(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -459,9 +451,8 @@ class TechOrder(Choice):
     display_name = "Tech Order"
 
     option_vanilla = 0
-    option_rdi_random = 1
-    option_mp = 2
-    option_mp_type = 3
+    option_mp = 1
+    option_mp_type = 2
     default = 0
 
 
@@ -471,7 +462,6 @@ class TechDamage(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -1075,13 +1065,17 @@ class BlockZenan1000(Toggle):
     display_name = "Block Zenan 1000"
 
 
+class MagusCastleLogicalConnection(Toggle):
+    """Magus's castle is a logical connection to the dark ages cave."""
+    display_name = "Magus Castle Logical Connection"
+
+
 class BossRandomizationType(Choice):
     """How bosses should be assigned to spots"""
     display_name = "Boss Randomization Type"
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -1091,7 +1085,6 @@ class MidbossRandomizationType(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -1134,7 +1127,6 @@ class ShopCapacityRandomization(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
-    option_rdi_random = 2
     default = 0
 
 
@@ -1167,8 +1159,7 @@ class ItemPriceRandomization(Choice):
     display_name = "Item Price Randomization"
 
     option_vanilla = 0
-    option_rdi_random = 1
-    option_random_multiplier = 2
+    option_random_multiplier = 1
     default = 0
 
 
@@ -1695,8 +1686,7 @@ class LootPool(Choice):
     display_name = "Loot Pool"
 
     option_vanilla = 0
-    option_rdi_random = 1
-    option_tiered_random = 2
+    option_tiered_random = 1
     default = 0
 
 
@@ -2855,7 +2845,6 @@ class WeaponRandoEffectScheme(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
-    option_rdi_random = 3
     default = 2
 
 
@@ -2866,7 +2855,6 @@ class WeaponRandoStatBoostScheme(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
-    option_rdi_random = 3
     default = 2
 
 
@@ -2910,7 +2898,6 @@ class WeaponRandoEffectScheme2(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
-    option_rdi_random = 3
     default = 2
 
 
@@ -2921,7 +2908,6 @@ class WeaponRandoStatBoostScheme2(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
-    option_rdi_random = 3
     default = 2
 
 
@@ -2965,7 +2951,6 @@ class WeaponRandoEffectScheme3(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
-    option_rdi_random = 3
     default = 2
 
 
@@ -2976,7 +2961,6 @@ class WeaponRandoStatBoostScheme3(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
-    option_rdi_random = 3
     default = 2
 
 
@@ -3967,6 +3951,7 @@ class CTRDIOptions(PerGameCommonOptions):
     disable_element_locks: DisableElementLocks
     block_zenan_600: BlockZenan600
     block_zenan_1000: BlockZenan1000
+    magus_castle_logical_connection: MagusCastleLogicalConnection
     boss_randomization_type: BossRandomizationType
     midboss_randomization_type: MidbossRandomizationType
     vanilla_boss_spots: VanillaBossSpots
@@ -4395,6 +4380,7 @@ option_groups: list[OptionGroup] = [
             DisableElementLocks,
             BlockZenan600,
             BlockZenan1000,
+            MagusCastleLogicalConnection,
 
         ]
     ),

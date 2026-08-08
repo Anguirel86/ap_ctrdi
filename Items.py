@@ -39,6 +39,7 @@ def _build_item_mappings() -> dict[str, int]:
     return item_name_to_id
 
 item_name_to_id = _build_item_mappings()
+id_to_item_name = {v: k for k, v in item_name_to_id.items()}
 item_name_to_rdi_type: dict[str, ItemID] = {str(x): x for x in ItemID}
 
 def create_items(config: randostate.ConfigState, player: int) -> list[Item]:

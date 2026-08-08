@@ -6,15 +6,6 @@ import logging
 import os
 import typing
 
-# RDI randomizer imports
-import ctrando.treasures.treasuretypes as tty
-from ctrando import randomizer
-from ctrando.arguments import arguments, argumenttypes, tomloptions
-from ctrando.base import multiworld
-from ctrando.common import ctenums, ctrom, randostate
-from ctrando.common.ctenums import ItemID
-from ctrando.strings import ctstrings
-
 # Archipelago imports
 import settings
 import worlds
@@ -26,6 +17,16 @@ from worlds.AutoWorld import WebWorld, World
 # Local APWorld imports
 from . import Items, Locations
 from .Client import CTRDIClient  # pyright: ignore[reportUnusedImport]
+from ctrando import randomizer
+from ctrando.arguments import arguments, argumenttypes, tomloptions
+from ctrando.base import multiworld
+from ctrando.common import ctenums, ctrom, randostate
+from ctrando.common.ctenums import ItemID
+from ctrando.strings import ctstrings
+
+# RDI randomizer imports
+#import ctrando.treasures.treasuretypes as tty
+from .ctrando.treasures import treasuretypes as tty
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
@@ -187,7 +188,6 @@ class CTRDIWorld(World):
             self.ct_rom, self.rdi_settings, self.config)
 
         multiworld.write_player_validation_data(out_rom, self.hashed_name)
-        rdi_logger.info(f"Hashed name: {self.hashed_name}")
 
         basename = self.multiworld.get_out_file_name_base(self.player)
         output_path = os.path.join(output_directory, f"{basename}.sfc")
@@ -232,10 +232,13 @@ class CTRDIWorld(World):
 
                     # Skip string fields with no data
                     if isinstance(spec, argumenttypes.StringArgument):
+                        value = value.value
                         if value != "":
                             data_dict[flag_name] = value
                     else:
                         data_dict[flag_name] = value
+
+
 
 
         # TODO: Trading post spots will have flags soon,

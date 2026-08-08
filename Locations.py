@@ -5,7 +5,8 @@ Locations package to handle location and logic related functions
 from collections.abc import Callable
 from dataclasses import dataclass
 
-import ctrando.treasures.treasuretypes as tty
+from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region
+
 from ctrando.arguments import arguments
 from ctrando.bosses.bosstypes import BossSpotID
 from ctrando.common import memory, randostate
@@ -15,7 +16,8 @@ from ctrando.entranceshuffler.owregions import OWRegion
 from ctrando.entranceshuffler.regionmap import ExitConnector, RegionConnector
 from ctrando.logic import logictypes
 
-from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region
+#import ctrando.treasures.treasuretypes as tty
+from .ctrando.treasures import treasuretypes as tty
 
 """Offset to give CTRDI locations a unique item range in AP"""
 LOC_ID_BASE = 50_350_000
@@ -124,6 +126,7 @@ def create_flag_events(
 
     Ignore shop rewards
     """
+    loc_cache = []
     for loc_region in config.region_map.loc_region_dict.values():
         reward_list = \
             list(loc_region.reward_spots) + loc_region.region_rewards
@@ -135,7 +138,7 @@ def create_flag_events(
                     isinstance(reward, ItemID):
 
                 create_event_loc_item_pair(
-                    str(reward), region_dict[loc_region.name].ap_region, player)
+                    str(reward), region_dict[loc_region.name].ap_region, player, loc_cache)
 
 def create_recruit_events(
     region_dict: dict[str, RegionData],
@@ -153,7 +156,7 @@ def create_recruit_events(
                     char_name = str(character)
                     ap_region = region_dict[loc_region.name].ap_region
                     create_event_loc_item_pair(
-                        char_name, ap_region, player)
+                        char_name, ap_region, player, [])
 
 def create_locations_for_regions(
     region_dict: dict[str, RegionData],
@@ -279,16 +282,24 @@ def create_access_rule(
 
     return can_access
 
-def create_event_loc_item_pair(name: str, region: Region, player: int):
+def create_event_loc_item_pair(name: str, region: Region, player: int, loc_cache: list[str]):
     """
     Create an event location with a locked event item
     """
+
+    loc_name = f"{region.name}-{name}"
+    # Some thing like starting rewards can be listed multiple times.
+    # If we've already added a location for them, then skip duplicates
+    if loc_name in loc_cache:
+        return
+
+    loc_cache.append(loc_name)
+
     item = Item(name,
                 ItemClassification.progression,
                 None,
                 player)
 
-    loc_name = f"{region.name}-{name}"
     loc = Location(player, loc_name, None, region)
     loc.place_locked_item(item)
     region.locations.append(loc)

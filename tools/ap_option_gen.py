@@ -83,7 +83,8 @@ class {get_class_name(flag)}(Choice):
         # So we need to rename it to avoid errors
         # TODO: Need a better way to deconflict these names
         if choice_str == "random":
-            choice_str = "rdi_random"
+            #choice_str = "rdi_random"
+            continue
 
         choice_str = choice_str.replace(" ", "_")
         choice_str = choice_str.replace("?", "")

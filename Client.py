@@ -7,12 +7,13 @@ from ctrando.common.ctenums import ItemID, TreasureID
 from ctrando.common.memory import Flags
 from ctrando.treasures import treasuretypes
 
-from NetUtils import ClientStatus
+from NetUtils import ClientStatus, NetworkItem
 from worlds.AutoSNIClient import SNIClient
 
-from . import Locations
+from . import Locations, Items
 
 snes_logger = logging.getLogger("SNES")
+client_logger = logging.getLogger("Client")
 
 ITEM_ID_BASE = 50_350_000
 MAX_IN_GAME_ITEM_ID = 0xFF
@@ -205,6 +206,7 @@ class CTRDIClient(SNIClient):
     """
 
     game = "Chrono Trigger Rando-Dalton Imperial"
+    patch_suffix = [".apctrdi"]
 
     def __init__(self):
         super().__init__()
@@ -309,25 +311,25 @@ class CTRDIClient(SNIClient):
 
 
     @classmethod
-    async def _get_next_item_to_deliver(cls, ctx) -> tuple[bool, int]:
+    async def _get_next_item_to_deliver(cls, ctx) -> tuple[bool, NetworkItem|None]:
         """
         Check if we have any items awaiting delivery and if so, return
         the (AP) ID of that item.
         """
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from SNIClient import snes_read
         item_cnt_buf = await snes_read(
             ctx, cls._to_sni(RECEIVED_ITEM_CNT), 2)
         if item_cnt_buf is None:
             # Read failed
-            return False, 0
+            return False, None
 
         item_cnt = int.from_bytes(item_cnt_buf, "little")
         num_items_received = len(ctx.items_received)
         if num_items_received <= item_cnt:
             # No items to deliver
-            return False, item_cnt - num_items_received
+            return False, None
 
-        return True, ctx.items_received[item_cnt].item
+        return True, ctx.items_received[item_cnt]
 
 
     @classmethod
@@ -336,7 +338,7 @@ class CTRDIClient(SNIClient):
         Check the delivery buffer address to see if the game
         is ready for another item to be delivered.
         """
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from SNIClient import snes_read
         delivery_buf = await snes_read(
             ctx, cls._to_sni(RECEIVED_ITEM_ADDR), 2)
         if delivery_buf is None:
@@ -386,7 +388,7 @@ class CTRDIClient(SNIClient):
         If so, then deliver the next one.
         """
 
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from SNIClient import snes_buffered_write, snes_flush_writes
         # Check the item delivery buffer. If it is not empty, then
         # the game is still busy delivering the previous item.
         game_ready = await cls._game_ready_for_delivery(ctx)
@@ -395,12 +397,12 @@ class CTRDIClient(SNIClient):
 
         # Check if we have any items awaiting delivery.
         # If so, we also get the index of the next item
-        items_available, ap_item_id = await cls._get_next_item_to_deliver(ctx)
-        if not items_available:
+        items_available, ap_item = await cls._get_next_item_to_deliver(ctx)
+        if not items_available or ap_item is None:
             return
 
         # Convert from AP item IDs to local CT item IDs
-        game_item_id = ap_item_id - ITEM_ID_BASE
+        game_item_id = ap_item.item - ITEM_ID_BASE
 
         # Check if this is a progressive item. We only send the base version to the game
         # and it sorts out the upgrades.
@@ -416,6 +418,11 @@ class CTRDIClient(SNIClient):
             cls._to_sni(RECEIVED_ITEM_ADDR),
             game_item_id.to_bytes(2, byteorder="little"))
         await snes_flush_writes(ctx)
+
+        name = Items.id_to_item_name[ap_item.item]
+        player = ctx.player_names[ap_item.player]
+        client_logger.info(f"Received {name} from {player}")
+
 
     async def _handle_victory_condition(self, ctx, event_data: bytes):
         """
@@ -451,7 +458,7 @@ class CTRDIClient(SNIClient):
     @override
     async def game_watcher(self, ctx) -> None:
 
-        from SNIClient import snes_buffered_write, snes_flush_writes, snes_read
+        from SNIClient import snes_read
         if not ctx.allow_collect or ctx.server is None or ctx.slot is None:
             # Client isn't fully connected yet
             return
