@@ -2,11 +2,11 @@
 Item package to handle functions and logic related to
 items and item placement in RDI.
 """
-import typing
+import logging
 
 import ctrando.treasures.treasuretypes as tty
 from ctrando.common import randostate
-from ctrando.common.ctenums import ItemID
+from ctrando.common.ctenums import CharID, ItemID
 from ctrando.entranceshuffler import entrancefiller
 
 from BaseClasses import Item, ItemClassification
@@ -17,6 +17,8 @@ from .Locations import locs_to_skip
 """Offset to give CTRDI items a unique item range in AP"""
 ITEM_ID_BASE = 50_350_000
 
+rdi_logger = logging.getLogger("RDI")
+
 def _build_item_mappings() -> dict[str, int]:
     """
     Build the item and location name-to-ID mappings.
@@ -26,7 +28,7 @@ def _build_item_mappings() -> dict[str, int]:
 
     # Add 7 character items and tech level items
     char_names = ["Crono", "Marle", "Lucca", "Robo", "Frog", "Ayla", "Magus"]
-    tech_level_names = [f"tech_level_{i}" for i in range(7)]
+    tech_level_names = [f"{char_names[i]}_tech_level" for i in range(7)]
 
     # Add character items
     for i, name in enumerate(char_names):
@@ -41,6 +43,20 @@ def _build_item_mappings() -> dict[str, int]:
 item_name_to_id = _build_item_mappings()
 id_to_item_name = {v: k for k, v in item_name_to_id.items()}
 item_name_to_rdi_type: dict[str, ItemID] = {str(x): x for x in ItemID}
+
+def is_tech_level_reward(item_id: int) -> bool:
+    """
+    Check if an item is a tech level reward
+    """
+    return (item_id >= ITEM_ID_BASE + 0x110) and (item_id < ITEM_ID_BASE + 0x117)
+
+def convert_to_char_id(item_id: int) -> CharID:
+    """
+    Convert a tech level reward to a character ID
+    """
+    char_id = item_id - (ITEM_ID_BASE + 0x110)
+    char_id_list = list(CharID)
+    return char_id_list[char_id]
 
 def create_items(config: randostate.ConfigState, player: int) -> list[Item]:
     """
@@ -76,7 +92,7 @@ def create_ap_item(item: ItemID, player: int) -> Item:
     Create an AP item from a CTRDI ItemID
     """
     # TODO: Handle item classification for additional key items
-    if item in entrancefiller.get_forced_key_items():
+    if item in entrancefiller.get_forced_key_items() or item == ItemID.JETSOFTIME:
         classification = ItemClassification.progression
     else:
         classification = ItemClassification.filler

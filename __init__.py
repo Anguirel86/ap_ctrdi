@@ -6,17 +6,7 @@ import logging
 import os
 import typing
 
-# Archipelago imports
-import settings
-import worlds
-from BaseClasses import Item, ItemClassification, Location, MultiWorld, Tutorial
-from Options import Choice, OptionList, Range, Toggle
-from Utils import read_snes_rom
-from worlds.AutoWorld import WebWorld, World
-
-# Local APWorld imports
-from . import Items, Locations
-from .Client import CTRDIClient  # pyright: ignore[reportUnusedImport]
+# RDI randomizer imports
 from ctrando import randomizer
 from ctrando.arguments import arguments, argumenttypes, tomloptions
 from ctrando.base import multiworld
@@ -24,9 +14,20 @@ from ctrando.common import ctenums, ctrom, randostate
 from ctrando.common.ctenums import ItemID
 from ctrando.strings import ctstrings
 
-# RDI randomizer imports
 #import ctrando.treasures.treasuretypes as tty
-from .ctrando.treasures import treasuretypes as tty
+from ctrando.treasures import treasuretypes as tty
+
+# Archipelago imports
+import settings
+import worlds
+from BaseClasses import Item, ItemClassification, Location, MultiWorld, Tutorial
+from Options import Choice, FreeText, OptionList, Range, Toggle
+from Utils import read_snes_rom
+from worlds.AutoWorld import WebWorld, World
+
+# Local APWorld imports
+from . import Items, Locations
+from .Client import CTRDIClient  # pyright: ignore[reportUnusedImport]
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
@@ -115,8 +116,6 @@ class CTRDIWorld(World):
         player_name = self.multiworld.player_name[self.player]
         self.hashed_name = hash(player_name).to_bytes(8, signed=True)
         self.encoded_name = base64.b64encode(self.hashed_name).decode()
-        # TODO: Pass the encoded name into the rando to be stored
-        #       in the player validation nmemory
 
         self._translate_settings()
         base_rom = ctrom.CTRom.from_file(self.get_rom_path())
@@ -205,41 +204,58 @@ class CTRDIWorld(World):
         patch.write()
         os.unlink(output_path)
 
+    def _convert_setting_value(self, flag_name: str, spec):
+        """
+        Convert a value for use in an RDI settings dictionary
+        """
+        value = getattr(self.options, flag_name)
+        if isinstance(value, Choice):
+            value = value.name_lookup[value.value]
+        elif isinstance(value, Toggle):
+            value = value.value == 1
+        elif isinstance(value, Range):
+            value = value.value
+            if spec.type_fn is not int:  # pyright: ignore[reportAttributeAccessIssue]
+                value = float(value / 100.0)
+        elif isinstance(value, OptionList):
+            value = value.value
+        elif isinstance(value, FreeText):
+            value = value.value
+        else:
+            raise Exception(f"Unknown argument type for {flag_name}")
+
+        return value
+
+    def _parse_group_spec(self, group_spec, data_dict):
+        """
+        Handle parsing options for the given group spec.
+        """
+        for flag_name, spec in group_spec.items():
+            if isinstance(spec, dict):
+                self._parse_group_spec(spec, data_dict)
+            else:
+                if hasattr(self.options, flag_name):
+                    value = self._convert_setting_value(flag_name, spec)
+                    if isinstance(spec, argumenttypes.StringArgument) and value == "":
+                        # Skip string fields with no data
+                        continue
+
+                    if isinstance(spec, argumenttypes.DistArgument) and not value:
+                        # Skip empty distribution args
+                        continue
+
+                    data_dict[flag_name] = value
 
     def _translate_settings(self):
         """
         Set up a randomizer Settings object with the user's chosen AP options
         """
+
+        # Parse options and convert them to something RDI can use
         data_dict = {}
         group_specs = arguments.Settings.get_argument_spec()
         for group_spec in group_specs.values():
-            for flag_name, spec in group_spec.items():  # pyright: ignore[reportAttributeAccessIssue]
-                if hasattr(self.options, flag_name):
-                    value = getattr(self.options, flag_name)
-                    if isinstance(value, Choice):
-                        value = value.name_lookup[value.value]
-
-                    if isinstance(value, Toggle):
-                        value = value.value == 1
-
-                    if isinstance(value, Range):
-                        value = value.value
-                        if spec.type_fn is not int:  # pyright: ignore[reportAttributeAccessIssue]
-                            value = float(value / 100.0)
-
-                    if isinstance(value, OptionList):
-                        value = value.value
-
-                    # Skip string fields with no data
-                    if isinstance(spec, argumenttypes.StringArgument):
-                        value = value.value
-                        if value != "":
-                            data_dict[flag_name] = value
-                    else:
-                        data_dict[flag_name] = value
-
-
-
+            self._parse_group_spec(group_spec, data_dict)
 
         # TODO: Trading post spots will have flags soon,
         #       so this is just a temp fix to remove them
@@ -273,9 +289,13 @@ class CTRDIWorld(World):
 
             if is_local:
                 # Replace the reward here with whatever AP chose.
-                # TODO: Char/tech levels
-                item_id = Items.item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
-                self.config.treasure_assignment[tid] = item_id
+                # TODO: Char levels
+                if Items.is_tech_level_reward(loc.item.code):
+                    char_id = Items.convert_to_char_id(loc.item.code)
+                    self.config.treasure_assignment[tid] = tty.TechLevelReward(char_id)
+                else:
+                    item_id = Items.item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
+                    self.config.treasure_assignment[tid] = item_id
             else:
                 # Replace reward here with the AP treasure type
                 item_name = ctstrings.pre_process_string(loc.item.name)

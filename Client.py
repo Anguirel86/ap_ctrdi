@@ -10,7 +10,7 @@ from ctrando.treasures import treasuretypes
 from NetUtils import ClientStatus, NetworkItem
 from worlds.AutoSNIClient import SNIClient
 
-from . import Locations, Items
+from . import Items, Locations
 
 snes_logger = logging.getLogger("SNES")
 client_logger = logging.getLogger("Client")
@@ -37,7 +37,7 @@ VICTORY_FLAG = 0x01
 LOCATION_ADDR = 0xF50100  # Already in SNI address space
 
 # ROM/player/slot validation
-VALIDATION_ADDR = ROM_START + 0x3F8C03
+VALIDATION_ADDR = ROM_START + 0x3AFAA0
 VALIDATION_SIZE = 0x20
 
 INVALID_TRACKING_LOCS = [0x00, 0x1B1]
@@ -373,8 +373,9 @@ class CTRDIClient(SNIClient):
             return (local_item_id | 0x8000)
 
         # Tech level
+        # Low order byte contains the character ID
         if local_item_id >= 0x110 and local_item_id < 0x120:
-            return (local_item_id | 0x4000)
+            return ((local_item_id - 0x110) | 0x4000)
 
         raise Exception(f"Unknown item ID {local_item_id}")
 

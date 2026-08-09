@@ -2,10 +2,9 @@
 Locations package to handle location and logic related functions
 """
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-
-from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region
 
 from ctrando.arguments import arguments
 from ctrando.bosses.bosstypes import BossSpotID
@@ -15,13 +14,14 @@ from ctrando.entranceshuffler.locregions import LocRegion
 from ctrando.entranceshuffler.owregions import OWRegion
 from ctrando.entranceshuffler.regionmap import ExitConnector, RegionConnector
 from ctrando.logic import logictypes
+from ctrando.treasures import treasuretypes as tty
 
-#import ctrando.treasures.treasuretypes as tty
-from .ctrando.treasures import treasuretypes as tty
+from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region
 
 """Offset to give CTRDI locations a unique item range in AP"""
 LOC_ID_BASE = 50_350_000
 
+rdi_logger = logging.getLogger("RDI")
 
 # NOTE: Trading post locations are not included for now since they can't be tracked.
 #       If/when flags get added for them we can add them back.
@@ -128,8 +128,7 @@ def create_flag_events(
     """
     loc_cache = []
     for loc_region in config.region_map.loc_region_dict.values():
-        reward_list = \
-            list(loc_region.reward_spots) + loc_region.region_rewards
+        reward_list = list(loc_region.reward_spots) + loc_region.region_rewards
         for reward in reward_list:
             if isinstance(reward, logictypes.ScriptReward) or \
                     isinstance(reward, logictypes.StrangeReward) or \
@@ -299,7 +298,6 @@ def create_event_loc_item_pair(name: str, region: Region, player: int, loc_cache
                 ItemClassification.progression,
                 None,
                 player)
-
     loc = Location(player, loc_name, None, region)
     loc.place_locked_item(item)
     region.locations.append(loc)
