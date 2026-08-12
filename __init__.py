@@ -244,6 +244,11 @@ class CTRDIWorld(World):
                         # Skip empty distribution args
                         continue
 
+                    if isinstance(spec, argumenttypes.DiscreteCategorialArg):
+                        # NOTE: This is a hack to get around the AP choice types reserving "random"
+                        if value == "rdi_random":
+                            value = "random"
+
                     data_dict[flag_name] = value
 
     def _translate_settings(self):
@@ -295,6 +300,12 @@ class CTRDIWorld(World):
                     self.config.treasure_assignment[tid] = tty.TechLevelReward(char_id)
                 else:
                     item_id = Items.item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
+
+                    # Replace progressive items with their base item and let
+                    # the ROM side handle the upgrade.
+                    if item_id in Items.progressive_items:
+                        item_id = Items.progressive_items[item_id]
+
                     self.config.treasure_assignment[tid] = item_id
             else:
                 # Replace reward here with the AP treasure type

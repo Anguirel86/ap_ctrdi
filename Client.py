@@ -189,17 +189,6 @@ _script_locations: dict[TreasureID, Flags | CheckCounter] = {
     TreasureID.JOHNNY_RACE_POWER_TAB: Flags.OBTAINED_JOHNNY_RACE_POWER_TAB
 }
 
-# Map upgraded progressive items to their base items.
-# We only send base items to the game and it sorts out the rest
-_progressive_items: dict[int, int] = {
-    ItemID.PENDANT_CHARGE: ItemID.PENDANT,
-    ItemID.MASAMUNE_2: ItemID.MASAMUNE_1,
-    ItemID.PRISMSHARD: ItemID.RAINBOW_SHELL,
-    ItemID.CLONE: ItemID.C_TRIGGER,
-    ItemID.RACE_LOG: ItemID.BIKE_KEY,
-}
-
-
 class CTRDIClient(SNIClient):
     """
     Game client for Chrono Trigger Rando-Dalton Imperial
@@ -407,8 +396,8 @@ class CTRDIClient(SNIClient):
 
         # Check if this is a progressive item. We only send the base version to the game
         # and it sorts out the upgrades.
-        if game_item_id in _progressive_items:
-            game_item_id = _progressive_items[game_item_id]
+        if game_item_id in Items.progressive_items:
+            game_item_id = Items.progressive_items[game_item_id]
 
         # Convert the item to an ID format the game's delivery code will recognize
         game_item_id = cls._convert_item_to_game_format(game_item_id)

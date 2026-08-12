@@ -12,6 +12,7 @@ option_groups_buf = io.StringIO()
 
 group_name_list: list[str] = []
 
+# Skip args that don't make sense in a multiworld context
 args_to_omit = [
     "ending"
 ]
@@ -81,10 +82,10 @@ class {get_class_name(flag)}(Choice):
 
         # "random" seems to be a reserved value in AP choice types
         # So we need to rename it to avoid errors
+        # Otherwise this can cause errors in weapon rando options
         # TODO: Need a better way to deconflict these names
         if choice_str == "random":
-            #choice_str = "rdi_random"
-            continue
+            choice_str = "rdi_random"
 
         choice_str = choice_str.replace(" ", "_")
         choice_str = choice_str.replace("?", "")

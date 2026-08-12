@@ -44,6 +44,16 @@ item_name_to_id = _build_item_mappings()
 id_to_item_name = {v: k for k, v in item_name_to_id.items()}
 item_name_to_rdi_type: dict[str, ItemID] = {str(x): x for x in ItemID}
 
+# Map upgraded progressive items to their base items.
+# We only send base items to the game and it sorts out the rest
+progressive_items: dict[int, ItemID] = {
+    ItemID.PENDANT_CHARGE: ItemID.PENDANT,
+    ItemID.MASAMUNE_2: ItemID.MASAMUNE_1,
+    ItemID.PRISMSHARD: ItemID.RAINBOW_SHELL,
+    ItemID.CLONE: ItemID.C_TRIGGER,
+    ItemID.RACE_LOG: ItemID.BIKE_KEY,
+}
+
 def is_tech_level_reward(item_id: int) -> bool:
     """
     Check if an item is a tech level reward

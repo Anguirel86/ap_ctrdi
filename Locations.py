@@ -22,7 +22,6 @@ from BaseClasses import CollectionState, Item, ItemClassification, Location, Mul
 LOC_ID_BASE = 50_350_000
 
 rdi_logger = logging.getLogger("RDI")
-
 # NOTE: Trading post locations are not included for now since they can't be tracked.
 #       If/when flags get added for them we can add them back.
 locs_to_skip: list[TreasureID] = [

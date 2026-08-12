@@ -97,6 +97,7 @@ class DropRewardPool(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -142,6 +143,7 @@ class DropRewardPool2(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -187,6 +189,7 @@ class DropRewardPool3(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -232,6 +235,7 @@ class DropRewardPool4(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -282,6 +286,7 @@ class CharmRewardPool(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -327,6 +332,7 @@ class CharmRewardPool2(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -372,6 +378,7 @@ class CharmRewardPool3(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -417,6 +424,7 @@ class CharmRewardPool4(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -451,8 +459,9 @@ class TechOrder(Choice):
     display_name = "Tech Order"
 
     option_vanilla = 0
-    option_mp = 1
-    option_mp_type = 2
+    option_rdi_random = 1
+    option_mp = 2
+    option_mp_type = 3
     default = 0
 
 
@@ -462,6 +471,7 @@ class TechDamage(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -1076,6 +1086,7 @@ class BossRandomizationType(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -1085,6 +1096,7 @@ class MidbossRandomizationType(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -1127,6 +1139,7 @@ class ShopCapacityRandomization(Choice):
 
     option_vanilla = 0
     option_shuffle = 1
+    option_rdi_random = 2
     default = 0
 
 
@@ -1159,7 +1172,8 @@ class ItemPriceRandomization(Choice):
     display_name = "Item Price Randomization"
 
     option_vanilla = 0
-    option_random_multiplier = 1
+    option_rdi_random = 1
+    option_random_multiplier = 2
     default = 0
 
 
@@ -1686,7 +1700,8 @@ class LootPool(Choice):
     display_name = "Loot Pool"
 
     option_vanilla = 0
-    option_tiered_random = 1
+    option_rdi_random = 1
+    option_tiered_random = 2
     default = 0
 
 
@@ -2845,6 +2860,7 @@ class WeaponRandoEffectScheme(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
+    option_rdi_random = 3
     default = 2
 
 
@@ -2855,6 +2871,7 @@ class WeaponRandoStatBoostScheme(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
+    option_rdi_random = 3
     default = 2
 
 
@@ -2898,6 +2915,7 @@ class WeaponRandoEffectScheme2(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
+    option_rdi_random = 3
     default = 2
 
 
@@ -2908,6 +2926,7 @@ class WeaponRandoStatBoostScheme2(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
+    option_rdi_random = 3
     default = 2
 
 
@@ -2951,6 +2970,7 @@ class WeaponRandoEffectScheme3(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
+    option_rdi_random = 3
     default = 2
 
 
@@ -2961,6 +2981,7 @@ class WeaponRandoStatBoostScheme3(Choice):
     option_no_change = 0
     option_shuffle = 1
     option_shuffle_linked = 2
+    option_rdi_random = 3
     default = 2
 
 
