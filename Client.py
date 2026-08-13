@@ -29,10 +29,14 @@ SRAM_START = 0xE00000
 EVENT_BLOCK_SIZE = 0x200
 EVENT_BASE_ADDR = 0x7F0000
 TREASURE_BASE_ADDR = 0x7F0001
-RECEIVED_ITEM_ADDR = 0x7F0039
-RECEIVED_ITEM_CNT = 0x7F003B
+
 VICTORY_ADDR = 0x7F0021
 VICTORY_FLAG = 0x01
+
+RECEIVED_ITEM_ADDR = 0x7F0039
+RECEIVED_ITEM_CNT = 0x7F003B
+
+ATTRACT_MODE_SCENE_ADDR = 0x7F0062
 
 LOCATION_ADDR = 0xF50100  # Already in SNI address space
 
@@ -260,6 +264,12 @@ class CTRDIClient(SNIClient):
         if event_data[0:4] == b"@ABC":
             return False
 
+        # Don't track during attract mode. The map values will look normal,
+        # but the game hasn't actually started.
+        offset = ATTRACT_MODE_SCENE_ADDR - EVENT_BASE_ADDR
+        if event_data[offset] > 0:
+            return False
+
         # Don't track on invalid maps like the title screen
         map_id = int.from_bytes(map_data, "little")
         if map_id in INVALID_TRACKING_LOCS:
@@ -350,8 +360,6 @@ class CTRDIClient(SNIClient):
         0x20nn - Normal type item
         0x00nn - Ignored/no-op
 
-        # TODO: Clean up the magic numbers here
-        #       Maybe add conversion functions in an Items module?
         """
         # Normal item
         if local_item_id <= MAX_IN_GAME_ITEM_ID:
@@ -367,6 +375,7 @@ class CTRDIClient(SNIClient):
             return ((local_item_id - 0x110) | 0x4000)
 
         raise Exception(f"Unknown item ID {local_item_id}")
+
 
     @classmethod
     async def _try_deliver_next_item(cls, ctx):

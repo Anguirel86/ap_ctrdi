@@ -41,6 +41,16 @@ locs_to_skip: list[TreasureID] = [
     TreasureID.TRADING_POST_SPECIAL,
 ]
 
+non_progression_locs: list[TreasureID] = [
+    TreasureID.NORTHERN_RUINS_ANTECHAMBER_SEALED_1000,
+    TreasureID.NORTHERN_RUINS_BACK_LEFT_SEALED_1000,
+    TreasureID.NORTHERN_RUINS_BACK_RIGHT_SEALED_1000,
+    TreasureID.TRUCE_INN_SEALED_1000,
+    TreasureID.PORRE_MAYOR_SEALED_1,
+    TreasureID.PORRE_MAYOR_SEALED_2,
+    TreasureID.GUARDIA_CASTLE_SEALED_1000,
+]
+
 @dataclass
 class RegionData:
     """Store corresponding RDI and AP region definitions"""
@@ -195,8 +205,9 @@ def create_locations_for_regions(
                 region_data.ap_region.locations.append(location)
                 location.access_rule = lambda state: True
 
+                # TODO: This section is a bit of a mess.  Clean it up and simplify logic.
                 if len(progression_spots) > 0:
-                    # If there are no progressio spots then the user wants full
+                    # If there are no progression spots then the user wants full
                     # chronosanity mode minus the excluded spots
                     # If there are progression spots specified then we need to
                     # set up the item rules accordingly
@@ -204,10 +215,16 @@ def create_locations_for_regions(
                         # limit item classification for non-forced and non-incentive spots
                         location.item_rule = non_progression
 
+                # Force non_progression_locs to the non_progression rule
+                if loc in non_progression_locs:
+                    location.item_rule = non_progression
+
                 if loc in excluded_spots:
                     # Limit exluded spots to only filler items and traps
                     # These are usually missable locations so don't put anything good there
                     location.item_rule = junk_only
+
+
 
 
 def create_region_map(
