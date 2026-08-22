@@ -13,8 +13,6 @@ from ctrando.base import multiworld
 from ctrando.common import ctenums, ctrom, randostate
 from ctrando.common.ctenums import ItemID
 from ctrando.strings import ctstrings
-
-#import ctrando.treasures.treasuretypes as tty
 from ctrando.treasures import treasuretypes as tty
 
 # Archipelago imports
@@ -27,7 +25,7 @@ from worlds.AutoWorld import WebWorld, World
 
 # Local APWorld imports
 from . import Items, Locations
-from .Client import CTRDIClient  # pyright: ignore[reportUnusedImport]
+from .Client import CTRDIClient  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
@@ -40,7 +38,8 @@ rdi_logger = logging.getLogger("RDI")
 CTUSA_MD5_HASH = "a2bc447961e52fd2227baed164f729dc"
 
 
-class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):  # pyright: ignore[reportAttributeAccessIssue]
+@typing.final
+class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):
     hash = CTUSA_MD5_HASH
     game = "Chrono Trigger Rando-Dalton Imperial"
     patch_file_ending = ".apctrdi"
@@ -50,7 +49,9 @@ class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):  # pyright: ignore[reportAttri
         return CTRDIWorld.get_base_rom_bytes()
 
 
+@typing.final
 class CTRDISettings(settings.Group):
+    @typing.final
     class RomFile(settings.SNESRomPath):
         """File name of the CT ROM"""
         description = "Chrono Trigger (USA) ROM"
@@ -59,7 +60,7 @@ class CTRDISettings(settings.Group):
 
     rom_file: RomFile = RomFile(RomFile.copy_to)
 
-
+@typing.final
 class CTRDIWebWorld(WebWorld):
     tutorials = [Tutorial(  # noqa: RUF012
         "Multiworld Setup Guide",
@@ -71,7 +72,7 @@ class CTRDIWebWorld(WebWorld):
     )]
     option_groups = option_groups
 
-
+@typing.final
 class CTRDIWorld(World):
     """
     Rando-Dalton Imperial is a highly customizable open world randomizer for
@@ -83,31 +84,30 @@ class CTRDIWorld(World):
     topology_present = True
     origin_region_name = "starting_rewards"
     options_dataclass = CTRDIOptions
-    Options: CTRDIOptions
+    Options: CTRDIOptions  # pyright: ignore[reportUninitializedInstanceVariable]
     settings_key = "ctrdi_options"
     settings: typing.ClassVar[CTRDISettings]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     web = CTRDIWebWorld()
 
-    rdi_settings: arguments.Settings
-    config: randostate.ConfigState
+    rdi_settings: arguments.Settings  # pyright: ignore[reportUninitializedInstanceVariable]
+    config: randostate.ConfigState  # pyright: ignore[reportUninitializedInstanceVariable]
 
     location_name_to_id = Locations.location_name_to_id
     item_name_to_id = Items.item_name_to_id
 
-    _item_name_to_rdi_type: typing.ClassVar[dict[str, ItemID]] = {str(x): x for x in ItemID}
+    _item_name_to_rdi_type: dict[str, ItemID]
+
+    hashed_name: bytes  # pyright: ignore[reportUninitializedInstanceVariable]
+    encoded_name: str  # pyright: ignore[reportUninitializedInstanceVariable]
+    ct_rom: randomizer.ctrom.CTRom  # pyright: ignore[reportUninitializedInstanceVariable]
 
 
     def __init__(self, world: MultiWorld, player: int):
         super().__init__(world, player)
+        self._item_name_to_rdi_type = {str(x): x for x in ItemID}
 
-    @classmethod
-    def stage_assert_generate(cls, multiworld: MultiWorld):
-        """
-        TODO: Do we need this?
-        """
-        pass
-
+    @typing.override
     def generate_early(self):
         """
         Set up the RDI settings/config objects that will be used
@@ -123,12 +123,14 @@ class CTRDIWorld(World):
         self.config = randomizer.get_random_config(
             self.rdi_settings, self.ct_rom, self.multiworld.random)
 
+    @typing.override
     def create_item(self, name: str) -> Item:
         """
         Create an AP item from the named RDI item.
         """
-        return Items.create_ap_item(self._item_name_to_RDI_type[name], self.player)
+        return Items.create_ap_item(self._item_name_to_rdi_type[name], self.player)
 
+    @typing.override
     def create_items(self) -> None:
         """
         Create the multiworld items for this player
@@ -136,6 +138,7 @@ class CTRDIWorld(World):
         items = Items.create_items(self.config, self.player)
         self.multiworld.itempool += items
 
+    @typing.override
     def create_regions(self) -> None:
         """
         Create regions and locations for this player
@@ -161,7 +164,7 @@ class CTRDIWorld(World):
         # Add all regions to the multiworld object
         self.multiworld.regions += [x.ap_region for x in region_dict.values()]
 
-
+    @typing.override
     def get_filler_item_name(self) -> str:
         """
         Get a random filler item
@@ -169,16 +172,29 @@ class CTRDIWorld(World):
         # TODO: Real filler items - Ideally this will never be needed
         return str(ctenums.ItemID.MOP)
 
-
-    def modify_multidata(self, multidata):
+    @typing.override
+    def modify_multidata(self, multidata):  # pyright: ignore[reportMissingParameterType]
         player_name = self.multiworld.player_name[self.player]
         multidata["connect_names"][self.encoded_name] = multidata["connect_names"][player_name]
 
+    @typing.override
+    def fill_slot_data(self) -> dict[str, typing.Any]:
+        """
+        Fill slot data for the client and tracker
+        This includes the items that have been replaced by DS variants so that
+        the client can report and deliver the correct item.
+        """
+        slot_data: dict[str, typing.Any] = {}
+        # Create a mapping of ds items to their respective base items
+        slot_data["ds_replacements"] = Items.get_ds_replacement_map(self.config)
+
+        return slot_data
+
+    @typing.override
     def generate_output(self, output_directory: str):
         """
         Generate the randomized ROM and create the patch file
         """
-
         # Get all items placed in this game world and write
         # the player and item data back to the RDI config
         self._modify_rom_treasures()
@@ -192,7 +208,7 @@ class CTRDIWorld(World):
         output_path = os.path.join(output_directory, f"{basename}.sfc")
 
         with open(output_path, "wb") as file:
-            file.write(out_rom.getbuffer())
+            _ = file.write(out_rom.getbuffer())
 
         patch = CTRDIDeltaPatch(
             os.path.splitext(output_path)[0] +
@@ -201,21 +217,21 @@ class CTRDIWorld(World):
             player_name=self.multiworld.player_name[self.player],
             patched_path=output_path)
 
-        patch.write()
+        patch.write()  # pyright: ignore[reportUnknownMemberType]
         os.unlink(output_path)
 
     def _convert_setting_value(self, flag_name: str, spec):
         """
         Convert a value for use in an RDI settings dictionary
         """
-        value = getattr(self.options, flag_name)
+        value = getattr(self.options, flag_name)  # pyright: ignore[reportAny]
         if isinstance(value, Choice):
             value = value.name_lookup[value.value]
         elif isinstance(value, Toggle):
             value = value.value == 1
         elif isinstance(value, Range):
             value = value.value
-            if spec.type_fn is not int:  # pyright: ignore[reportAttributeAccessIssue]
+            if spec.type_fn is not int:  # pyright: ignore[reportUnknownMemberType]
                 value = float(value / 100.0)
         elif isinstance(value, OptionList):
             value = value.value
@@ -318,13 +334,13 @@ class CTRDIWorld(World):
         """
         Get the path to the Chrono Trigger ROM
         """
-        file_name = CTRDIWorld.settings.rom_file
+        file_name = CTRDIWorld.settings.rom_file  # pyright: ignore[reportAny]
 
-        if not os.path.exists(file_name):
+        if not os.path.exists(file_name):  # pyright: ignore[reportAny]
             # TODO: Refine error text
             raise ValueError("No Chrono Trigger ROM specified")
 
-        return file_name
+        return file_name  # pyright: ignore[reportAny]
 
     @staticmethod
     def get_base_rom_bytes(file_name: str = "") -> bytes:

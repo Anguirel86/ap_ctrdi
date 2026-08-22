@@ -181,27 +181,25 @@ def parse_option_group(group_name: str, arg_spec: dict):
 
 def main():
 
-    option_class_buf.write("""
+    _ = option_class_buf.write("""
 from dataclasses import dataclass
 
 from Options import Choice, DefaultOnToggle, FreeText, OptionGroup, \\
     OptionList, PerGameCommonOptions, Range, Toggle\n\n""")
 
-    dataclass_buf.write("""
+    _ = dataclass_buf.write("""
 @dataclass
 class CTRDIOptions(PerGameCommonOptions):\n""")
 
-    option_groups_buf.write("""\n
+    _ = option_groups_buf.write("""\n
 option_groups: list[OptionGroup] = [\n""")
 
     arg_specs = arguments.Settings.get_argument_spec()
     for section_name, arg_spec in arg_specs.items():
-        if section_name == "plando_options":
-            continue
         parse_option_group(section_name, arg_spec)  # pyright: ignore[reportArgumentType]
 
     # Close out the last option group
-    option_groups_buf.write("""
+    _ = option_groups_buf.write("""
         ]
     )
 ]

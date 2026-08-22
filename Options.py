@@ -3377,6 +3377,183 @@ class Zeal2Level(Range):
     default = 50
 
 
+class PlandoRecruitStarter(OptionList):
+    """Characters to start with"""
+    display_name = "Plando Recruit Starter"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus', '...', 'random'}
+    default = ['random']
+
+
+class PlandoRecruitCathedral(Choice):
+    """Recruit to assign to cathedral"""
+    display_name = "Plando Recruit Cathedral"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitCastle(Choice):
+    """Recruit to assign to castle"""
+    display_name = "Plando Recruit Castle"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitMillennialFair(Choice):
+    """Recruit to assign to millennial_fair"""
+    display_name = "Plando Recruit Millennial Fair"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitDactylNest(Choice):
+    """Recruit to assign to dactyl_nest"""
+    display_name = "Plando Recruit Dactyl Nest"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitProtoDome(Choice):
+    """Recruit to assign to proto_dome"""
+    display_name = "Plando Recruit Proto Dome"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitFrogsBurrow(Choice):
+    """Recruit to assign to frogs_burrow"""
+    display_name = "Plando Recruit Frogs Burrow"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitCronoTrial(Choice):
+    """Recruit to assign to crono_trial"""
+    display_name = "Plando Recruit Crono Trial"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitDeathPeak(Choice):
+    """Recruit to assign to death_peak"""
+    display_name = "Plando Recruit Death Peak"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitNorthCape(Choice):
+    """Recruit to assign to north_cape"""
+    display_name = "Plando Recruit North Cape"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
+class PlandoRecruitYakraBox(Choice):
+    """Recruit to assign to yakra_box"""
+    display_name = "Plando Recruit Yakra Box"
+
+    option_... = 0
+    option_none = 1
+    option_rdi_random = 2
+    option_crono = 3
+    option_marle = 4
+    option_lucca = 5
+    option_robo = 6
+    option_frog = 7
+    option_ayla = 8
+    option_magus = 9
+    default = 0
+
+
 class EquipableRandoScheme(Choice):
     """Method for choosing who can equip what"""
     display_name = "Equipable Rando Scheme"
@@ -4181,6 +4358,17 @@ class CTRDIOptions(PerGameCommonOptions):
     krawlie_level: KrawlieLevel
     gato_level: GatoLevel
     zeal2_level: Zeal2Level
+    plando_recruit_starter: PlandoRecruitStarter
+    plando_recruit_cathedral: PlandoRecruitCathedral
+    plando_recruit_castle: PlandoRecruitCastle
+    plando_recruit_millennial_fair: PlandoRecruitMillennialFair
+    plando_recruit_dactyl_nest: PlandoRecruitDactylNest
+    plando_recruit_proto_dome: PlandoRecruitProtoDome
+    plando_recruit_frogs_burrow: PlandoRecruitFrogsBurrow
+    plando_recruit_crono_trial: PlandoRecruitCronoTrial
+    plando_recruit_death_peak: PlandoRecruitDeathPeak
+    plando_recruit_north_cape: PlandoRecruitNorthCape
+    plando_recruit_yakra_box: PlandoRecruitYakraBox
     equipable_rando_scheme: EquipableRandoScheme
     crono_lose_equip_normal_percent: CronoLoseEquipNormalPercent
     marle_lose_equip_normal_percent: MarleLoseEquipNormalPercent
@@ -4687,6 +4875,24 @@ option_groups: list[OptionGroup] = [
             KrawlieLevel,
             GatoLevel,
             Zeal2Level,
+
+        ]
+    ),
+
+    OptionGroup(
+        "Plando Options",
+        [
+            PlandoRecruitStarter,
+            PlandoRecruitCathedral,
+            PlandoRecruitCastle,
+            PlandoRecruitMillennialFair,
+            PlandoRecruitDactylNest,
+            PlandoRecruitProtoDome,
+            PlandoRecruitFrogsBurrow,
+            PlandoRecruitCronoTrial,
+            PlandoRecruitDeathPeak,
+            PlandoRecruitNorthCape,
+            PlandoRecruitYakraBox,
 
         ]
     ),

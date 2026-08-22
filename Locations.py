@@ -102,7 +102,8 @@ def create_victory_rule(player: int, rdi_settings: arguments.Settings) -> Callab
 
         # Hard Lavos
         # TODO: Do we actually want to include this in logic?
-        #       I think this is actually an option
+        #       Hard Lavos is an option, but we should probably omit this rule
+        #       so that AP logic never tries to force it.
         #ocean_palace_access = state.has(
         #    str(objty.QuestID.ZEAL_PALACE_THRONE), player)
         #ruby_knife = state.has(str(ItemID.RUBY_KNIFE), player)
@@ -179,12 +180,12 @@ def create_locations_for_regions(
                         list(rdi_settings.logic_options.incentive_spots)
     excluded_spots = rdi_settings.logic_options.excluded_spots
 
-    def non_progression(item):
+    def non_progression(item: Item):
         return item.classification in [ItemClassification.filler,
                                        ItemClassification.useful,
                                        ItemClassification.trap]
 
-    def junk_only(item):
+    def junk_only(item: Item):
         return item.classification in [ItemClassification.filler,
                                        ItemClassification.trap]
 
@@ -223,9 +224,6 @@ def create_locations_for_regions(
                     # Limit exluded spots to only filler items and traps
                     # These are usually missable locations so don't put anything good there
                     location.item_rule = junk_only
-
-
-
 
 def create_region_map(
     config: randostate.ConfigState,
@@ -274,7 +272,7 @@ def create_access_rule(
     Get an AP access rule from a RDI connector object
     """
     # Trivial case, always available
-    # An list containint an empty list of single access rules
+    # A list containing an empty list of single access rules
     if not connector.rule.get_access_rule()[0]:
         return lambda state: True
 
@@ -301,7 +299,6 @@ def create_event_loc_item_pair(name: str, region: Region, player: int, loc_cache
     """
     Create an event location with a locked event item
     """
-
     loc_name = f"{region.name}-{name}"
     # Some thing like starting rewards can be listed multiple times.
     # If we've already added a location for them, then skip duplicates

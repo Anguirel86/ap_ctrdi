@@ -1,9 +1,9 @@
 import logging
+import typing
 from dataclasses import dataclass
-from typing import override
 
 import ctrando.common.memory
-from ctrando.common.ctenums import ItemID, TreasureID
+from ctrando.common.ctenums import TreasureID
 from ctrando.common.memory import Flags
 from ctrando.treasures import treasuretypes
 
@@ -56,15 +56,6 @@ class CheckCounter:
     """
     address: int
     count: int
-
-@dataclass
-class InventoryData:
-    """
-    Data class to store item ID and inventory index for items to be delivered.
-    """
-    item_id: int
-    idx: int
-
 
 """
 Dictionary of script based treasure locations to their respective
@@ -193,6 +184,7 @@ _script_locations: dict[TreasureID, Flags | CheckCounter] = {
     TreasureID.JOHNNY_RACE_POWER_TAB: Flags.OBTAINED_JOHNNY_RACE_POWER_TAB
 }
 
+@typing.final
 class CTRDIClient(SNIClient):
     """
     Game client for Chrono Trigger Rando-Dalton Imperial
@@ -203,7 +195,8 @@ class CTRDIClient(SNIClient):
 
     def __init__(self):
         super().__init__()
-        self._loc_name_to_id = {str(loc): ITEM_ID_BASE + loc for loc in TreasureID}
+        self._loc_name_to_id: dict[str, int] = {str(loc): ITEM_ID_BASE + loc for loc in TreasureID}
+        self.slot_data: dict[str, typing.Any] = {}
 
     @staticmethod
     def _to_sni(addr: int) -> int:
@@ -213,7 +206,7 @@ class CTRDIClient(SNIClient):
         return (addr - 0x7E0000) + WRAM_START
 
     @staticmethod
-    def _is_chest_collected(event_data, chest_index: int) -> bool:
+    def _is_chest_collected(event_data: bytes, chest_index: int) -> bool:
         """
         Check if the chest at the given index has been collected
         """
@@ -224,7 +217,7 @@ class CTRDIClient(SNIClient):
         return (event_data[chest_data_start + byte_offset] & bit) > 0
 
     @staticmethod
-    def _is_script_treasure_collected(event_data, loc: TreasureID) -> bool:
+    def _is_script_treasure_collected(event_data: bytes, loc: TreasureID) -> bool:
         """
         Check if a script based treasure has been collected
         """
@@ -235,7 +228,7 @@ class CTRDIClient(SNIClient):
         if isinstance(check_data, Flags):
             # Standard memory flag
             offset = check_data.value.address - EVENT_BASE_ADDR
-            return event_data[offset] & check_data.value.bit
+            return (event_data[offset] & check_data.value.bit) > 0
 
         if isinstance(check_data, CheckCounter):
             # Counter type check
@@ -350,35 +343,40 @@ class CTRDIClient(SNIClient):
         # Delivery buffer is clear, we are good to send.
         return True
 
-    @classmethod
-    def _convert_item_to_game_format(cls, local_item_id: int) -> int:
+    def _format_item_for_delivery(self, item_id: int) -> int:
         """
-        Convert the item ID into the format the rando recognizes for item delivery.
+        Given an item ID, handle conversions and flags for
+        delivery from client -> ROM.
 
         0x80nn - Character type item
         0x40nn - Tech type item
         0x20nn - Normal type item
         0x00nn - Ignored/no-op
-
         """
-        # Normal item
-        if local_item_id <= MAX_IN_GAME_ITEM_ID:
-            return (local_item_id | 0x2000)
+        if Items.is_normal_item_reward(item_id):
+            base_item = item_id - Items.ITEM_ID_BASE
+            return (0x2000 | base_item)
 
-        # Character
-        if local_item_id >= 0x100 and local_item_id < 0x110:
-            return (local_item_id | 0x8000)
+        if Items.is_char_reward(item_id):
+            char_id = int(Items.convert_to_char_id(item_id))
+            return (0x8000 | char_id)
 
-        # Tech level
-        # Low order byte contains the character ID
-        if local_item_id >= 0x110 and local_item_id < 0x120:
-            return ((local_item_id - 0x110) | 0x4000)
+        if Items.is_tech_level_reward(item_id):
+            char_id = int(Items.convert_to_char_id(item_id))
+            return (0x4000 | char_id)
 
-        raise Exception(f"Unknown item ID {local_item_id}")
+        if Items.is_ds_item_reward(item_id):
+            # Get the ID of the item that this DS item replaced
+            if item_id in self.slot_data["ds_replacements"]:
+                replaced_item: int = self.slot_data["ds_replacements"][item_id]
+                return (0x2000 | replaced_item)
+            raise Exception(f"DS replacement item not registered: {item_id}")
 
 
-    @classmethod
-    async def _try_deliver_next_item(cls, ctx):
+        raise Exception(f"Unknown item ID {item_id}")
+
+
+    async def _try_deliver_next_item(self, ctx):
         """
         Deliver the next item if there are any available.
 
@@ -390,13 +388,13 @@ class CTRDIClient(SNIClient):
         from SNIClient import snes_buffered_write, snes_flush_writes
         # Check the item delivery buffer. If it is not empty, then
         # the game is still busy delivering the previous item.
-        game_ready = await cls._game_ready_for_delivery(ctx)
+        game_ready = await self._game_ready_for_delivery(ctx)
         if not game_ready:
             return
 
         # Check if we have any items awaiting delivery.
         # If so, we also get the index of the next item
-        items_available, ap_item = await cls._get_next_item_to_deliver(ctx)
+        items_available, ap_item = await self._get_next_item_to_deliver(ctx)
         if not items_available or ap_item is None:
             return
 
@@ -409,15 +407,17 @@ class CTRDIClient(SNIClient):
             game_item_id = Items.progressive_items[game_item_id]
 
         # Convert the item to an ID format the game's delivery code will recognize
-        game_item_id = cls._convert_item_to_game_format(game_item_id)
+        game_item_id = self._format_item_for_delivery(ap_item.item)
 
         # We have items to deliver and the game is ready to receive them
         snes_buffered_write(
             ctx,
-            cls._to_sni(RECEIVED_ITEM_ADDR),
+            self._to_sni(RECEIVED_ITEM_ADDR),
             game_item_id.to_bytes(2, byteorder="little"))
         await snes_flush_writes(ctx)
 
+        # Print a message to the client console since we don't do
+        # in-game text boxes for item delivery.
         name = Items.id_to_item_name[ap_item.item]
         player = ctx.player_names[ap_item.player]
         client_logger.info(f"Received {name} from {player}")
@@ -454,7 +454,7 @@ class CTRDIClient(SNIClient):
 
         return True
 
-    @override
+    @typing.override
     async def game_watcher(self, ctx) -> None:
 
         from SNIClient import snes_read
@@ -483,7 +483,12 @@ class CTRDIClient(SNIClient):
 
             await self._handle_victory_condition(ctx, event_data)
 
-    @override
+    @typing.override
+    def on_package(self, ctx, cmd: str, args: dict[str, typing.Any]) -> None:
+        if cmd == "Connected":
+            self.slot_data = args.get("slot_data", {})
+
+    @typing.override
     async def deathlink_kill_player(self, ctx) -> None:
         """
         Not implmented for RDI
