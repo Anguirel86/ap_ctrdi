@@ -2530,6 +2530,11 @@ class GuaranteedLootExact(OptionList):
     default = []
 
 
+class SplitLinkedChests(Toggle):
+    """Remove dependency between versions of charged chests and the other NR chests"""
+    display_name = "Split Linked Chests"
+
+
 class GoodLoot2(OptionList):
     """Loot that is considered to be good for pool 2 (ignored by vanilla)"""
     display_name = "Good Loot 2"
@@ -4242,6 +4247,7 @@ class CTRDIOptions(PerGameCommonOptions):
     tech_level_forced_spots: TechLevelForcedSpots
     guaranteed_loot: GuaranteedLoot
     guaranteed_loot_exact: GuaranteedLootExact
+    split_linked_chests: SplitLinkedChests
     good_loot_2: GoodLoot2
     good_loot_spots_2: GoodLootSpots2
     good_loot_rate_2: GoodLootRate2
@@ -4724,6 +4730,7 @@ option_groups: list[OptionGroup] = [
             TechLevelForcedSpots,
             GuaranteedLoot,
             GuaranteedLootExact,
+            SplitLinkedChests,
             GoodLoot2,
             GoodLootSpots2,
             GoodLootRate2,
