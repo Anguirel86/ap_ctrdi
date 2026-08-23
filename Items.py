@@ -164,7 +164,6 @@ def get_ds_replacement_map(config: randostate.ConfigState) -> dict[int, int]:
         if config.item_db[item].get_name_as_str(True) == ds_item_name:
             # Map the AP item id of the DS item to the base item it is replacing
             ds_map[item_name_to_id[ds_item_name]] = int(item) + ITEM_ID_BASE
-            rdi_logger.info(f"Replacing {item!s} with {ds_item_name}")
 
     def check_item_list(items: list[ItemID], ds_items: list[DSItem]):
         """Check if a list of items has been replaced with one of a list of DS versions"""

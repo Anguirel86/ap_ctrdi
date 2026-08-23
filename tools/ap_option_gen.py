@@ -87,6 +87,9 @@ class {get_class_name(flag)}(Choice):
         if choice_str == "random":
             choice_str = "rdi_random"
 
+        if choice_str == "...":
+            choice_str = "char_any"
+
         choice_str = choice_str.replace(" ", "_")
         choice_str = choice_str.replace("?", "")
         option_class_buf.write(f"    option_{choice_str} = {counter}\n")

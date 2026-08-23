@@ -3393,7 +3393,7 @@ class PlandoRecruitCathedral(Choice):
     """Recruit to assign to cathedral"""
     display_name = "Plando Recruit Cathedral"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3410,7 +3410,7 @@ class PlandoRecruitCastle(Choice):
     """Recruit to assign to castle"""
     display_name = "Plando Recruit Castle"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3427,7 +3427,7 @@ class PlandoRecruitMillennialFair(Choice):
     """Recruit to assign to millennial_fair"""
     display_name = "Plando Recruit Millennial Fair"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3444,7 +3444,7 @@ class PlandoRecruitDactylNest(Choice):
     """Recruit to assign to dactyl_nest"""
     display_name = "Plando Recruit Dactyl Nest"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3461,7 +3461,7 @@ class PlandoRecruitProtoDome(Choice):
     """Recruit to assign to proto_dome"""
     display_name = "Plando Recruit Proto Dome"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3478,7 +3478,7 @@ class PlandoRecruitFrogsBurrow(Choice):
     """Recruit to assign to frogs_burrow"""
     display_name = "Plando Recruit Frogs Burrow"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3495,7 +3495,7 @@ class PlandoRecruitCronoTrial(Choice):
     """Recruit to assign to crono_trial"""
     display_name = "Plando Recruit Crono Trial"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3512,7 +3512,7 @@ class PlandoRecruitDeathPeak(Choice):
     """Recruit to assign to death_peak"""
     display_name = "Plando Recruit Death Peak"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3529,7 +3529,7 @@ class PlandoRecruitNorthCape(Choice):
     """Recruit to assign to north_cape"""
     display_name = "Plando Recruit North Cape"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3
@@ -3546,7 +3546,7 @@ class PlandoRecruitYakraBox(Choice):
     """Recruit to assign to yakra_box"""
     display_name = "Plando Recruit Yakra Box"
 
-    option_... = 0
+    option_char_any = 0
     option_none = 1
     option_rdi_random = 2
     option_crono = 3

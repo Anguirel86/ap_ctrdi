@@ -265,13 +265,17 @@ class CTRDIWorld(World):
                         if value == "rdi_random":
                             value = "random"
 
+                        # Handle character plando's "..." value, which breaks
+                        # the option naming in choice types.
+                        if value == "char_any":
+                            value = "..."
+
                     data_dict[flag_name] = value
 
     def _translate_settings(self):
         """
         Set up a randomizer Settings object with the user's chosen AP options
         """
-
         # Parse options and convert them to something RDI can use
         data_dict = {}
         group_specs = arguments.Settings.get_argument_spec()

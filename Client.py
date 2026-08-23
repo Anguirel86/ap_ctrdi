@@ -367,8 +367,9 @@ class CTRDIClient(SNIClient):
 
         if Items.is_ds_item_reward(item_id):
             # Get the ID of the item that this DS item replaced
-            if item_id in self.slot_data["ds_replacements"]:
-                replaced_item: int = self.slot_data["ds_replacements"][item_id]
+            if str(item_id) in self.slot_data["ds_replacements"]:
+                replaced_item: int = int(self.slot_data["ds_replacements"][str(item_id)])
+                replaced_item = replaced_item - Items.ITEM_ID_BASE
                 return (0x2000 | replaced_item)
             raise Exception(f"DS replacement item not registered: {item_id}")
 
