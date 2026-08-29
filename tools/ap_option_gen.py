@@ -13,9 +13,7 @@ option_groups_buf = io.StringIO()
 group_name_list: list[str] = []
 
 # Skip args that don't make sense in a multiworld context
-args_to_omit = [
-    "ending"
-]
+args_to_omit = []
 
 
 def get_class_name(val: str) -> str:
@@ -31,7 +29,7 @@ def write_toggle_control(flag: str, spec: argumenttypes.FlagArg):
 class {get_class_name(flag)}(Toggle):
     """{spec.help_text}"""
     display_name = "{get_display_name(flag)}"\n\n'''
-    option_class_buf.write(control)
+    _ = option_class_buf.write(control)
 
 
 def write_range_control(flag: str, spec: argumenttypes.DiscreteNumericalArg):
@@ -62,7 +60,7 @@ class {get_class_name(flag)}(Range):
     range_start = {min_val}
     range_end = {max_val}
     default = {default_val}\n\n'''
-    option_class_buf.write(control)
+    _ = option_class_buf.write(control)
 
 
 def write_choice_control(flag: str, spec: argumenttypes.DiscreteCategorialArg):
@@ -87,15 +85,24 @@ class {get_class_name(flag)}(Choice):
         if choice_str == "random":
             choice_str = "rdi_random"
 
+        # The "..." option in character plando fields breaks AP choice types.
+        # Replace it with "char_any". This will be translated back during generation.
+        # TODO: Maybe find a better name?  The "..." option means that the location may
+        #       hold any character, but also possibly no character.
         if choice_str == "...":
             choice_str = "char_any"
 
-        choice_str = choice_str.replace(" ", "_")
-        choice_str = choice_str.replace("?", "")
-        option_class_buf.write(f"    option_{choice_str} = {counter}\n")
+        # Some ending options contain spaces or questions marks.
+        # Remove these here and then we'll have to figure out how to associate
+        # the modified values with the real ones during generation.
+        if flag == "ending":
+            choice_str = choice_str.replace(" ", "_")
+            choice_str = choice_str.replace("?", "")
+
+        _ = option_class_buf.write(f"    option_{choice_str} = {counter}\n")
         counter = counter + 1
 
-    option_class_buf.write(f"    default = {default_val}\n\n")
+    _ = option_class_buf.write(f"    default = {default_val}\n\n")
 
 
 def write_string_control(flag: str, spec: argumenttypes.StringArgument):
@@ -104,7 +111,7 @@ class {get_class_name(flag)}(FreeText):
     """{spec.help_text}"""
     display_name = "{get_display_name(flag)}"
     default = ""\n\n'''
-    option_class_buf.write(control)
+    _ = option_class_buf.write(control)
 
 
 def write_distribution_control(flag: str, spec: argumenttypes.DistArgument):
@@ -113,7 +120,7 @@ class {get_class_name(flag)}(FreeText):
     """{spec.help_text}"""
     display_name = "{get_display_name(flag)}"
     default = ""\n\n'''
-    option_class_buf.write(control)
+    _ = option_class_buf.write(control)
 
 
 def write_list_control(flag: str, spec: argumenttypes.MultipleDiscreteSelection):
@@ -139,17 +146,17 @@ class {get_class_name(flag)}(OptionList):
     valid_keys = {valid_keys_as_str}
     default = {default_list_as_str}\n\n'''
 
-    option_class_buf.write(control)
+    _ = option_class_buf.write(control)
 
 def parse_option_group(group_name: str, arg_spec: dict):
 
     if group_name not in group_name_list:
         if group_name_list:
             # Close out the previous group
-            option_groups_buf.write("""
+            _ = option_groups_buf.write("""
         ]
     ),\n""")
-        option_groups_buf.write(f"""
+        _ = option_groups_buf.write(f"""
     OptionGroup(
         "{get_display_name(group_name)}",
         [\n""")
@@ -209,13 +216,13 @@ option_groups: list[OptionGroup] = [\n""")
 """)
 
     # Write everything to the options file
-    option_class_buf.seek(0)
-    dataclass_buf.seek(0)
-    option_groups_buf.seek(0)
+    _ = option_class_buf.seek(0)
+    _ = dataclass_buf.seek(0)
+    _ = option_groups_buf.seek(0)
     with open("Options.py", "w") as file:
-        file.write(option_class_buf.read())
-        file.write(dataclass_buf.read())
-        file.write(option_groups_buf.read())
+        _ = file.write(option_class_buf.read())
+        _ = file.write(dataclass_buf.read())
+        _ = file.write(option_groups_buf.read())
 
 
 if __name__ == "__main__":

@@ -206,10 +206,16 @@ def get_ds_replacement_map(config: randostate.ConfigState) -> dict[int, int]:
 
     return ds_map
 
-def create_items(config: randostate.ConfigState, player: int) -> list[Item]:
+def create_items(config: randostate.ConfigState, player: int, ds_replacements: dict[int, int]) -> list[Item]:
     """
     Return a list of all possible items
     """
+
+    # ds_replacements maps DS items to the items they replace.  We need the
+    # inverse of that here so that we can initially create the DS items based
+    # on the items thaat they are replacing.
+    ds_replacements_inv: dict[int, int] = {v: k for k, v in ds_replacements.items()}
+
     items: list[Item] = []
     for loc, value in config.treasure_assignment.items():
 
@@ -220,7 +226,7 @@ def create_items(config: randostate.ConfigState, player: int) -> list[Item]:
         if isinstance(value, tty.Gold):
             # TODO: Handle gold rewards
             #       I'm not sure it's possible to send arbitrary numbers
-            #       for gold rewards, so maybe leave gold chests local?
+            #       for gold rewards, so leave gold chests local for now
             pass
         elif isinstance(value, tty.TechLevelReward):
             character = value.char_id
@@ -229,8 +235,20 @@ def create_items(config: randostate.ConfigState, player: int) -> list[Item]:
             ap_item = Item(item_name, ItemClassification.useful, item_id, player)
             items.append(ap_item)
         #TODO: Character rewards
+        elif isinstance(value, ItemID):
+            ap_id = value + ITEM_ID_BASE
+            if ap_id in ds_replacements_inv:
+                # If the item is part of the DS replacement list, then we need to create the
+                # new DS item instead of the base item.
+                # Mark DS items as useful since they are high tier
+                ds_item_id = ds_replacements_inv[ap_id]
+                ds_item_name = id_to_item_name[ds_item_id]
+                items.append(Item(ds_item_name, ItemClassification.useful, ds_item_id, player))
+            else:
+                # Normal item
+                items.append(create_ap_item(value, player))
         else:
-            items.append(create_ap_item(value, player))  # pyright: ignore[reportArgumentType]
+            raise Exception("unknown type while creating APItems")
 
     return items
 

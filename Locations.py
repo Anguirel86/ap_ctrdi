@@ -41,14 +41,9 @@ locs_to_skip: list[TreasureID] = [
     TreasureID.TRADING_POST_SPECIAL,
 ]
 
+# Currently unused, but this list can be used to designate locations that
+# should never be given progression items.
 non_progression_locs: list[TreasureID] = [
-    TreasureID.NORTHERN_RUINS_ANTECHAMBER_SEALED_1000,
-    TreasureID.NORTHERN_RUINS_BACK_LEFT_SEALED_1000,
-    TreasureID.NORTHERN_RUINS_BACK_RIGHT_SEALED_1000,
-    TreasureID.TRUCE_INN_SEALED_1000,
-    TreasureID.PORRE_MAYOR_SEALED_1,
-    TreasureID.PORRE_MAYOR_SEALED_2,
-    TreasureID.GUARDIA_CASTLE_SEALED_1000,
 ]
 
 @dataclass
@@ -101,9 +96,8 @@ def create_victory_rule(player: int, rdi_settings: arguments.Settings) -> Callab
             return True
 
         # Hard Lavos
-        # TODO: Do we actually want to include this in logic?
-        #       Hard Lavos is an option, but we should probably omit this rule
-        #       so that AP logic never tries to force it.
+        # NOTE: Hard Lavos is technically a way to end the game, but is not included
+        #       as part of the victory rule so that AP never expects it.
         #ocean_palace_access = state.has(
         #    str(objty.QuestID.ZEAL_PALACE_THRONE), player)
         #ruby_knife = state.has(str(ItemID.RUBY_KNIFE), player)

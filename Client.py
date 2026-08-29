@@ -353,8 +353,15 @@ class CTRDIClient(SNIClient):
         0x20nn - Normal type item
         0x00nn - Ignored/no-op
         """
+
         if Items.is_normal_item_reward(item_id):
             base_item = item_id - Items.ITEM_ID_BASE
+
+            # Check if this is a progressive item. We only send the base version to the game
+            # and it sorts out the upgrades.
+            if base_item in Items.progressive_items:
+                base_item = int(Items.progressive_items[base_item])
+
             return (0x2000 | base_item)
 
         if Items.is_char_reward(item_id):
@@ -398,14 +405,6 @@ class CTRDIClient(SNIClient):
         items_available, ap_item = await self._get_next_item_to_deliver(ctx)
         if not items_available or ap_item is None:
             return
-
-        # Convert from AP item IDs to local CT item IDs
-        game_item_id = ap_item.item - ITEM_ID_BASE
-
-        # Check if this is a progressive item. We only send the base version to the game
-        # and it sorts out the upgrades.
-        if game_item_id in Items.progressive_items:
-            game_item_id = Items.progressive_items[game_item_id]
 
         # Convert the item to an ID format the game's delivery code will recognize
         game_item_id = self._format_item_for_delivery(ap_item.item)

@@ -29,7 +29,6 @@ from .Client import CTRDIClient  # noqa: F401  # pyright: ignore[reportUnusedImp
 from .Options import CTRDIOptions, option_groups
 
 # TODO task list:
-#  - Handle tech level rewards
 #  - Create tutorial docs
 
 
@@ -106,6 +105,7 @@ class CTRDIWorld(World):
     def __init__(self, world: MultiWorld, player: int):
         super().__init__(world, player)
         self._item_name_to_rdi_type = {str(x): x for x in ItemID}
+        self.ds_replacements: dict[int, int] = {}
 
     @typing.override
     def generate_early(self):
@@ -122,6 +122,7 @@ class CTRDIWorld(World):
         self.ct_rom = randomizer.ctrom.CTRom(base_rom.getvalue())
         self.config = randomizer.get_random_config(
             self.rdi_settings, self.ct_rom, self.multiworld.random)
+        self.ds_replacements = Items.get_ds_replacement_map(self.config)
 
     @typing.override
     def create_item(self, name: str) -> Item:
@@ -135,7 +136,7 @@ class CTRDIWorld(World):
         """
         Create the multiworld items for this player
         """
-        items = Items.create_items(self.config, self.player)
+        items = Items.create_items(self.config, self.player, self.ds_replacements)
         self.multiworld.itempool += items
 
     @typing.override
@@ -185,9 +186,7 @@ class CTRDIWorld(World):
         the client can report and deliver the correct item.
         """
         slot_data: dict[str, typing.Any] = {}
-        # Create a mapping of ds items to their respective base items
-        slot_data["ds_replacements"] = Items.get_ds_replacement_map(self.config)
-
+        slot_data["ds_replacements"] = self.ds_replacements
         return slot_data
 
     @typing.override
@@ -270,6 +269,13 @@ class CTRDIWorld(World):
                         if value == "char_any":
                             value = "..."
 
+                        # The ending selector flag contains strings that do not translate well
+                        # into AP options. We sanitize them when creating the options object
+                        # and have to convert them back to real values here.
+                        if flag_name == "ending":
+                            ending_num = getattr(self.options, flag_name).value  # pyright: ignore[reportAny]
+                            value = spec.choices[ending_num]
+
                     data_dict[flag_name] = value
 
     def _translate_settings(self):
@@ -301,15 +307,24 @@ class CTRDIWorld(World):
     def _modify_rom_treasures(self):
         """
         Write treasure data back to the config.
+
+        The initial config gives us our items, but AP shuffles them around.
+        Write the items back to the ROM, treating local items as local and remote
+        items as a custom reward type.
         """
         filled = self.multiworld.get_filled_locations(self.player)
         for loc in filled:
-            # get_filled_locations guarantees there is an item here
-            is_local = loc.item.player == self.player  # pyright: ignore[reportOptionalMemberAccess]
 
             if loc.address is None:
+                # Skip event locations
                 continue
 
+            # Sanity checks to make PyRight happy
+            # get_filled_locations should already filter these out
+            if loc.item is None or loc.item.code is None:
+                continue
+
+            is_local = loc.item.player == self.player
             tid = Locations.get_tid_from_address(loc.address)
 
             if is_local:
@@ -319,12 +334,17 @@ class CTRDIWorld(World):
                     char_id = Items.convert_to_char_id(loc.item.code)
                     self.config.treasure_assignment[tid] = tty.TechLevelReward(char_id)
                 else:
-                    item_id = Items.item_name_to_rdi_type[loc.item.name]  # pyright: ignore[reportOptionalMemberAccess]
 
-                    # Replace progressive items with their base item and let
-                    # the ROM side handle the upgrade.
-                    if item_id in Items.progressive_items:
-                        item_id = Items.progressive_items[item_id]
+                    if Items.is_ds_item_reward(loc.item.code):
+                        # Convert from the DS item to the base item it replaced
+                        item_id = ItemID(self.ds_replacements[loc.item.code] - Items.ITEM_ID_BASE)
+                    else:
+                        item_id = Items.item_name_to_rdi_type[loc.item.name]
+
+                        # Replace progressive items with their base item and let
+                        # the ROM side handle the upgrade.
+                        if item_id in Items.progressive_items:
+                            item_id = Items.progressive_items[item_id]
 
                     self.config.treasure_assignment[tid] = item_id
             else:

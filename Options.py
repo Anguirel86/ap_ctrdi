@@ -2810,6 +2810,25 @@ class MagusPalette(FreeText):
     default = ""
 
 
+class Ending(Choice):
+    """name of ending (or "random")"""
+    display_name = "Ending"
+
+    option_beyond_time = 0
+    option_the_dream_project = 1
+    option_the_successor_of_guardia = 2
+    option_goodnight = 3
+    option_the_legendary_hero = 4
+    option_the_unknown_past = 5
+    option_people_of_the_times = 6
+    option_the_oath = 7
+    option_dino_age = 8
+    option_what_the_prophet_seeks = 9
+    option_a_slide_show = 10
+    option_rdi_random = 11
+    default = 1
+
+
 class RemoveFlashes(Toggle):
     """Remove flashes from many animations"""
     display_name = "Remove Flashes"
@@ -4290,6 +4309,7 @@ class CTRDIOptions(PerGameCommonOptions):
     frog_palette: FrogPalette
     ayla_palette: AylaPalette
     magus_palette: MagusPalette
+    ending: Ending
     remove_flashes: RemoveFlashes
     alt_lightning2: AltLightning2
     ds_item_pool: DsItemPool
@@ -4787,6 +4807,7 @@ option_groups: list[OptionGroup] = [
             FrogPalette,
             AylaPalette,
             MagusPalette,
+            Ending,
             RemoveFlashes,
             AltLightning2,
 
