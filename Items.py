@@ -243,7 +243,10 @@ def create_items(config: randostate.ConfigState, player: int, ds_replacements: d
                 # Mark DS items as useful since they are high tier
                 ds_item_id = ds_replacements_inv[ap_id]
                 ds_item_name = id_to_item_name[ds_item_id]
-                items.append(Item(ds_item_name, ItemClassification.useful, ds_item_id, player))
+                item_class = ItemClassification.useful
+                if ds_item_name == ds_item_to_name[DSItem.CHAMPIONS_BADGE]:
+                    item_class = ItemClassification.progression
+                items.append(Item(ds_item_name, item_class, ds_item_id, player))
             else:
                 # Normal item
                 items.append(create_ap_item(value, player))

@@ -5,6 +5,7 @@ import hashlib
 import logging
 import os
 import typing
+from pathlib import Path
 
 # RDI randomizer imports
 from ctrando import randomizer
@@ -95,17 +96,29 @@ class CTRDIWorld(World):
     location_name_to_id = Locations.location_name_to_id
     item_name_to_id = Items.item_name_to_id
 
-    _item_name_to_rdi_type: dict[str, ItemID]
-
     hashed_name: bytes  # pyright: ignore[reportUninitializedInstanceVariable]
     encoded_name: str  # pyright: ignore[reportUninitializedInstanceVariable]
     ct_rom: randomizer.ctrom.CTRom  # pyright: ignore[reportUninitializedInstanceVariable]
+    has_prepatch = False
 
 
     def __init__(self, world: MultiWorld, player: int):
         super().__init__(world, player)
-        self._item_name_to_rdi_type = {str(x): x for x in ItemID}
         self.ds_replacements: dict[int, int] = {}
+
+        # Determine where the prepatch files are if we aren't running from source
+        self.event_path = None
+        self.prepatch_path = None
+        if self.zip_path is not None:
+            # We should be in custom_worlds, but check just in case the apworld was
+            # installed in lib/worlds.
+            parent_dir = Path(self.zip_path).parent
+            if parent_dir.name.endswith("custom_worlds"):
+                self.event_path = parent_dir.joinpath(Path("../lib/ctrando/post_config.pkl"))
+                self.prepatch_path = parent_dir.joinpath(Path("../lib/ctrando/patch.pkl"))
+            elif parent_dir.name.endswith("/lib/worlds"):
+                self.event_path = parent_dir.joinpath(Path("../ctrando/post_config.pkl"))
+                self.prepatch_path = parent_dir.joinpath(Path("../ctrando/patch.pkl"))
 
     @typing.override
     def generate_early(self):
@@ -116,6 +129,10 @@ class CTRDIWorld(World):
         player_name = self.multiworld.player_name[self.player]
         self.hashed_name = hash(player_name).to_bytes(8, signed=True)
         self.encoded_name = base64.b64encode(self.hashed_name).decode()
+
+        # Check if the prepatched files exist.  If not, create them.
+        # These will greatly speed up subsequent generation.
+        self.has_prepatch = self._check_prepatch()
 
         self._translate_settings()
         base_rom = ctrom.CTRom.from_file(self.get_rom_path())
@@ -129,7 +146,7 @@ class CTRDIWorld(World):
         """
         Create an AP item from the named RDI item.
         """
-        return Items.create_ap_item(self._item_name_to_rdi_type[name], self.player)
+        return Items.create_ap_item(Items.item_name_to_rdi_type[name], self.player)
 
     @typing.override
     def create_items(self) -> None:
@@ -198,8 +215,12 @@ class CTRDIWorld(World):
         # the player and item data back to the RDI config
         self._modify_rom_treasures()
 
-        out_rom = randomizer.get_ctrom_from_config(
-            self.ct_rom, self.rdi_settings, self.config)
+        if self.has_prepatch:
+            out_rom = randomizer.get_ctrom_from_config(
+                self.ct_rom, self.rdi_settings, self.config, self.event_path, self.prepatch_path)
+        else:
+            out_rom = randomizer.get_ctrom_from_config(
+                self.ct_rom, self.rdi_settings, self.config)
 
         multiworld.write_player_validation_data(out_rom, self.hashed_name)
 
@@ -352,6 +373,36 @@ class CTRDIWorld(World):
                 item_name = ctstrings.pre_process_string(loc.item.name)
                 player_name = ctstrings.pre_process_string(self.multiworld.player_name[loc.item.player])
                 self.config.treasure_assignment[tid] = tty.APReward(item_name, player_name)
+
+    def _check_prepatch(self):
+        """
+        Check for the presence of prepatch files and create them if necessary.
+
+        RDI allows the use of prepatched event/patch data to speed up subsequent
+        generation attempts. These allow the randomizer to more quickly apply the
+        pre-randomization patches/updates.
+
+        Store the prepatch files with the randomizer library. This way the user will
+        have to regenerate prepatch files any time they update, ensuring that they
+        are kept in sync.
+        """
+        if self.event_path is None or self.prepatch_path is None:
+            return False
+
+        # Check if the event and prepatch files exist
+        if not os.path.isfile(self.event_path) or not os.path.isfile(self.prepatch_path):
+            # one or both files don't exist.  Generate them.
+            # make sure the directory exists
+            prepatch_dir = self.event_path.parent
+            os.makedirs(prepatch_dir, exist_ok=True)
+
+            rdi_logger.info(f"Generating RDI prepatch files in {prepatch_dir}")
+            base_rom = ctrom.CTRom.from_file(self.get_rom_path())
+            randomizer.dump_openworld_post_config(base_rom, self.event_path)
+            randomizer.dump_prepatched_ctrom(vanilla_rom=base_rom, dump_path=self.prepatch_path)
+
+        return True
+
 
     @staticmethod
     def get_rom_path() -> str:

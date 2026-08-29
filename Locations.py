@@ -6,6 +6,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from ctrando.arguments.gearrandooptions import DSItem
 from ctrando.arguments import arguments
 from ctrando.bosses.bosstypes import BossSpotID
 from ctrando.common import memory, randostate
@@ -278,7 +279,15 @@ def create_access_rule(
             satisfies_rule = True
             for item in single_rule:
                 count = single_rule.count(item)
-                if not state.has(str(item), player, count):
+                if item == ItemID.HERO_MEDAL:
+                    # Hero medal is the only key item that can be replaced
+                    # with a DS item. Check both it and its replacement
+                    # for any rules that require it.
+                    has_item = state.has(str(item), player, count) or \
+                         state.has("ChampBadge", player, count)
+                else:
+                    has_item = state.has(str(item), player, count)
+                if not has_item:
                     # At least one condition of this rule isn't met
                     satisfies_rule = False
 
