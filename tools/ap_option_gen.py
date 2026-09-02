@@ -32,7 +32,7 @@ class {get_class_name(flag)}(Toggle):
     _ = option_class_buf.write(control)
 
 
-def write_range_control(flag: str, spec: argumenttypes.DiscreteNumericalArg):
+def write_range_control(flag: str, spec: argumenttypes.DiscreteNumericalArg[int|float]):
     """
     Handle writing the range class controls.
     Ranges are numeric options with a min/max value.
@@ -68,7 +68,7 @@ def write_choice_control(flag: str, spec: argumenttypes.DiscreteCategorialArg):
 class {get_class_name(flag)}(Choice):
     """{spec.help_text}"""
     display_name = "{get_display_name(flag)}"\n'''
-    option_class_buf.write(control + "\n")
+    _ = option_class_buf.write(control + "\n")
 
     # Write each choice value
     default_val = 0
@@ -105,7 +105,7 @@ class {get_class_name(flag)}(Choice):
     _ = option_class_buf.write(f"    default = {default_val}\n\n")
 
 
-def write_string_control(flag: str, spec: argumenttypes.StringArgument):
+def write_string_control(flag: str, spec: argumenttypes.StringArgument[str]):
     control = f'''
 class {get_class_name(flag)}(FreeText):
     """{spec.help_text}"""
@@ -171,9 +171,8 @@ def parse_option_group(group_name: str, arg_spec: dict):
             parse_option_group(group_name, spec)
         else:
             #if not isinstance(spec, argumenttypes.MultipleDiscreteSelection):
-            dataclass_buf.write(f"    {flag}: {get_class_name(flag)}\n")
-            option_groups_buf.write(
-                f"            {get_class_name(flag)},\n")
+            _ = dataclass_buf.write(f"    {flag}: {get_class_name(flag)}\n")
+            _ = option_groups_buf.write(f"            {get_class_name(flag)},\n")
 
         if isinstance(spec, argumenttypes.FlagArg):
             write_toggle_control(flag, spec)

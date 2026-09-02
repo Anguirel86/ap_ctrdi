@@ -1121,6 +1121,18 @@ class MidbossPool(OptionList):
     default = ['gato', 'dalton', 'krawlie', 'super_slash', 'flea_plus', 'atropos_xr']
 
 
+class LavosGauntletBosses(OptionList):
+    """Bosses to fight in the Lavos gauntlet (max 9)"""
+    display_name = "Lavos Gauntlet Bosses"
+    valid_keys = {'dalton_plus', 'flea', 'flea_plus', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash', 'super_slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_nc', 'black_tyrano', 'magus', 'zeal2', 'mammon_machine'}
+    default = ['dragon_tank', 'guardian', 'heckran', 'zombor', 'masa_mune', 'nizbel', 'magus', 'black_tyrano', 'giga_gaia']
+
+
+class LavosGauntletRewards(Toggle):
+    """Lavos Gauntlet bosses have the same rewards as the base bosses."""
+    display_name = "Lavos Gauntlet Rewards"
+
+
 class ShopInventoryRandomization(Choice):
     """How shop inventory should be randomized"""
     display_name = "Shop Inventory Randomization"
@@ -1146,7 +1158,7 @@ class ShopCapacityRandomization(Choice):
 class NotBuyableItems(OptionList):
     """Items which can never appear in shops"""
     display_name = "Not Buyable Items"
-    valid_keys = {'none', 'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'scaling_level', 'objective_1', 'objective_2', 'objective_3', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'objective_4', 'objective_5', 'objective_6', 'objective_7', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'objective_8', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'pacifist', 'apitem', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'bent_sword', 'bent_hilt', 'masamune_0_atk', 'swallow', 'slasher_2', 'rainbow', 'unused_56', 'unused_57', 'unused_58', 'unused_59', 'weapon_end_5a', 'hide_tunic', 'karate_gi', 'bronzemail', 'maidensuit', 'iron_suit', 'titan_vest', 'gold_suit', 'ruby_vest', 'dark_mail', 'mist_robe', 'meso_mail', 'lumin_robe', 'flash_mail', 'lode_vest', 'aeon_suit', 'zodiaccape', 'nova_armor', 'prismdress', 'moon_armor', 'ruby_armor', 'ravenarmor', 'gloom_cape', 'white_mail', 'black_mail', 'blue_mail', 'red_mail', 'white_vest', 'black_vest', 'blue_vest', 'red_vest', 'taban_vest', 'taban_suit', 'armor_end_7b', 'hide_cap', 'bronzehelm', 'iron_helm', 'beret', 'gold_helm', 'rock_helm', 'ceratopper', 'glow_helm', 'lode_helm', 'aeon_helm', 'prism_helm', 'doom_helm', 'dark_helm', 'gloom_helm', 'safe_helm', 'taban_helm', 'sight_cap', 'memory_cap', 'time_hat', 'vigil_hat', 'ozziepants', 'haste_helm', 'rbow_helm', 'mermaidcap', 'helm_end_94', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'valor_crest', 'dragon_tear', 'sun_shades', 'prismspecs', 'accessory_end_bc', 'tonic', 'mid_tonic', 'full_tonic', 'ether', 'mid_ether', 'full_ether', 'elixir', 'hyperether', 'megaelixir', 'heal', 'revive', 'shelter', 'power_meal', 'lapis', 'barrier', 'shield', 'power_tab', 'magic_tab', 'speed_tab', 'petal', 'fang', 'horn', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'dreamstone', 'race_log', 'moon_stone', 'sun_stone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'bucketfrag', 'jetsoftime', 'pendant_charge', 'rainbow_shell', 'unused_ec', 'unused_ed', 'unused_ee', 'unused_ef', 'unused_f0', 'unused_f1'}
+    valid_keys = {'none', 'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'scaling_level', 'objective_1', 'objective_2', 'objective_3', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'objective_4', 'objective_5', 'objective_6', 'objective_7', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'objective_8', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'pacifist', 'unused_4a', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'bent_sword', 'bent_hilt', 'masamune_0_atk', 'swallow', 'slasher_2', 'rainbow', 'unused_56', 'unused_57', 'unused_58', 'unused_59', 'weapon_end_5a', 'hide_tunic', 'karate_gi', 'bronzemail', 'maidensuit', 'iron_suit', 'titan_vest', 'gold_suit', 'ruby_vest', 'dark_mail', 'mist_robe', 'meso_mail', 'lumin_robe', 'flash_mail', 'lode_vest', 'aeon_suit', 'zodiaccape', 'nova_armor', 'prismdress', 'moon_armor', 'ruby_armor', 'ravenarmor', 'gloom_cape', 'white_mail', 'black_mail', 'blue_mail', 'red_mail', 'white_vest', 'black_vest', 'blue_vest', 'red_vest', 'taban_vest', 'taban_suit', 'armor_end_7b', 'hide_cap', 'bronzehelm', 'iron_helm', 'beret', 'gold_helm', 'rock_helm', 'ceratopper', 'glow_helm', 'lode_helm', 'aeon_helm', 'prism_helm', 'doom_helm', 'dark_helm', 'gloom_helm', 'safe_helm', 'taban_helm', 'sight_cap', 'memory_cap', 'time_hat', 'vigil_hat', 'ozziepants', 'haste_helm', 'rbow_helm', 'mermaidcap', 'helm_end_94', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'valor_crest', 'dragon_tear', 'sun_shades', 'prismspecs', 'accessory_end_bc', 'tonic', 'mid_tonic', 'full_tonic', 'ether', 'mid_ether', 'full_ether', 'elixir', 'hyperether', 'megaelixir', 'heal', 'revive', 'shelter', 'power_meal', 'lapis', 'barrier', 'shield', 'power_tab', 'magic_tab', 'speed_tab', 'petal', 'fang', 'horn', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'dreamstone', 'race_log', 'moon_stone', 'sun_stone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'bucketfrag', 'jetsoftime', 'pendant_charge', 'rainbow_shell', 'unused_ec', 'unused_ed', 'unused_ee', 'unused_ef', 'unused_f0', 'unused_f1'}
     default = ['slasher', 'masamune_1', 'masamune_2', 'bent_hilt', 'bent_sword', 'slasher_2', 'taban_vest', 'taban_helm', 'taban_suit', 'ozziepants', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'sun_shades', 'prismspecs', 'petal', 'horn', 'fang', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'race_log', 'moon_stone', 'sun_stone', 'dreamstone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'pendant_charge', 'rainbow_shell', 'jetsoftime', 'dragon_tear', 'valor_crest']
 
 
@@ -3035,6 +3047,281 @@ class RandomWeaponStatBoostSpec3(FreeText):
     default = ""
 
 
+class WeaponRandoPool4(OptionList):
+    """Weapons whose effects will be shuffled"""
+    display_name = "Weapon Rando Pool 4"
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'swallow', 'slasher_2', 'rainbow'}
+    default = []
+
+
+class WeaponRandoEffectScheme4(Choice):
+    """How to randomize weapon effects"""
+    display_name = "Weapon Rando Effect Scheme 4"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class WeaponRandoStatBoostScheme4(Choice):
+    """How to randomize weapon stat boosts"""
+    display_name = "Weapon Rando Stat Boost Scheme 4"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class ForcedWeaponEffects4(OptionList):
+    """Effects guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Effects 4"
+    valid_keys = {'no_change', 'none', 'wonder', 'doom', 'crisis', 'stop_60', 'slow_60', 'chaos_80', 'stop_80_machines', '4x_crit', '9999_crit', '777_dmg', 'crisis_mp', 'valiant', 'mp_crit', 'mp_crit4x', 'hp_leech_5', 'hp_leech_10', 'mp_leech_2', 'mp_leech_5'}
+    default = []
+
+
+class ForcedWeaponStatBoosts4(OptionList):
+    """Stat boosts guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Stat Boosts 4"
+    valid_keys = {'no_change', 'none', 'speed_1', 'hit_2', 'power_2', 'stamina_2', 'magic_2', 'mdef_5', 'speed_3', 'hit_10', 'power_6', 'magic_6', 'mdef_10', 'power_4', 'speed_2', 'mdef_20', 'stamina_6', 'magic_4', 'mdef_12', 'magic_mdef_5', 'power_stamina_10', 'mdef_stamina_10', 'mdef_9', 'magic_10', 'power_10', 'speed_power_3', 'power_5', 'magic_5'}
+    default = []
+
+
+class RandomWeaponEffectSpec4(FreeText):
+    """Distribution for choosing random effects after the forced ones"""
+    display_name = "Random Weapon Effect Spec 4"
+    default = ""
+
+
+class RandomWeaponStatBoostSpec4(FreeText):
+    """Distribution for choosing random stat boosts after the forced ones"""
+    display_name = "Random Weapon Stat Boost Spec 4"
+    default = ""
+
+
+class WeaponRandoPool5(OptionList):
+    """Weapons whose effects will be shuffled"""
+    display_name = "Weapon Rando Pool 5"
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'swallow', 'slasher_2', 'rainbow'}
+    default = []
+
+
+class WeaponRandoEffectScheme5(Choice):
+    """How to randomize weapon effects"""
+    display_name = "Weapon Rando Effect Scheme 5"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class WeaponRandoStatBoostScheme5(Choice):
+    """How to randomize weapon stat boosts"""
+    display_name = "Weapon Rando Stat Boost Scheme 5"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class ForcedWeaponEffects5(OptionList):
+    """Effects guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Effects 5"
+    valid_keys = {'no_change', 'none', 'wonder', 'doom', 'crisis', 'stop_60', 'slow_60', 'chaos_80', 'stop_80_machines', '4x_crit', '9999_crit', '777_dmg', 'crisis_mp', 'valiant', 'mp_crit', 'mp_crit4x', 'hp_leech_5', 'hp_leech_10', 'mp_leech_2', 'mp_leech_5'}
+    default = []
+
+
+class ForcedWeaponStatBoosts5(OptionList):
+    """Stat boosts guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Stat Boosts 5"
+    valid_keys = {'no_change', 'none', 'speed_1', 'hit_2', 'power_2', 'stamina_2', 'magic_2', 'mdef_5', 'speed_3', 'hit_10', 'power_6', 'magic_6', 'mdef_10', 'power_4', 'speed_2', 'mdef_20', 'stamina_6', 'magic_4', 'mdef_12', 'magic_mdef_5', 'power_stamina_10', 'mdef_stamina_10', 'mdef_9', 'magic_10', 'power_10', 'speed_power_3', 'power_5', 'magic_5'}
+    default = []
+
+
+class RandomWeaponEffectSpec5(FreeText):
+    """Distribution for choosing random effects after the forced ones"""
+    display_name = "Random Weapon Effect Spec 5"
+    default = ""
+
+
+class RandomWeaponStatBoostSpec5(FreeText):
+    """Distribution for choosing random stat boosts after the forced ones"""
+    display_name = "Random Weapon Stat Boost Spec 5"
+    default = ""
+
+
+class WeaponRandoPool6(OptionList):
+    """Weapons whose effects will be shuffled"""
+    display_name = "Weapon Rando Pool 6"
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'swallow', 'slasher_2', 'rainbow'}
+    default = []
+
+
+class WeaponRandoEffectScheme6(Choice):
+    """How to randomize weapon effects"""
+    display_name = "Weapon Rando Effect Scheme 6"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class WeaponRandoStatBoostScheme6(Choice):
+    """How to randomize weapon stat boosts"""
+    display_name = "Weapon Rando Stat Boost Scheme 6"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class ForcedWeaponEffects6(OptionList):
+    """Effects guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Effects 6"
+    valid_keys = {'no_change', 'none', 'wonder', 'doom', 'crisis', 'stop_60', 'slow_60', 'chaos_80', 'stop_80_machines', '4x_crit', '9999_crit', '777_dmg', 'crisis_mp', 'valiant', 'mp_crit', 'mp_crit4x', 'hp_leech_5', 'hp_leech_10', 'mp_leech_2', 'mp_leech_5'}
+    default = []
+
+
+class ForcedWeaponStatBoosts6(OptionList):
+    """Stat boosts guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Stat Boosts 6"
+    valid_keys = {'no_change', 'none', 'speed_1', 'hit_2', 'power_2', 'stamina_2', 'magic_2', 'mdef_5', 'speed_3', 'hit_10', 'power_6', 'magic_6', 'mdef_10', 'power_4', 'speed_2', 'mdef_20', 'stamina_6', 'magic_4', 'mdef_12', 'magic_mdef_5', 'power_stamina_10', 'mdef_stamina_10', 'mdef_9', 'magic_10', 'power_10', 'speed_power_3', 'power_5', 'magic_5'}
+    default = []
+
+
+class RandomWeaponEffectSpec6(FreeText):
+    """Distribution for choosing random effects after the forced ones"""
+    display_name = "Random Weapon Effect Spec 6"
+    default = ""
+
+
+class RandomWeaponStatBoostSpec6(FreeText):
+    """Distribution for choosing random stat boosts after the forced ones"""
+    display_name = "Random Weapon Stat Boost Spec 6"
+    default = ""
+
+
+class WeaponRandoPool7(OptionList):
+    """Weapons whose effects will be shuffled"""
+    display_name = "Weapon Rando Pool 7"
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'swallow', 'slasher_2', 'rainbow'}
+    default = []
+
+
+class WeaponRandoEffectScheme7(Choice):
+    """How to randomize weapon effects"""
+    display_name = "Weapon Rando Effect Scheme 7"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class WeaponRandoStatBoostScheme7(Choice):
+    """How to randomize weapon stat boosts"""
+    display_name = "Weapon Rando Stat Boost Scheme 7"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class ForcedWeaponEffects7(OptionList):
+    """Effects guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Effects 7"
+    valid_keys = {'no_change', 'none', 'wonder', 'doom', 'crisis', 'stop_60', 'slow_60', 'chaos_80', 'stop_80_machines', '4x_crit', '9999_crit', '777_dmg', 'crisis_mp', 'valiant', 'mp_crit', 'mp_crit4x', 'hp_leech_5', 'hp_leech_10', 'mp_leech_2', 'mp_leech_5'}
+    default = []
+
+
+class ForcedWeaponStatBoosts7(OptionList):
+    """Stat boosts guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Stat Boosts 7"
+    valid_keys = {'no_change', 'none', 'speed_1', 'hit_2', 'power_2', 'stamina_2', 'magic_2', 'mdef_5', 'speed_3', 'hit_10', 'power_6', 'magic_6', 'mdef_10', 'power_4', 'speed_2', 'mdef_20', 'stamina_6', 'magic_4', 'mdef_12', 'magic_mdef_5', 'power_stamina_10', 'mdef_stamina_10', 'mdef_9', 'magic_10', 'power_10', 'speed_power_3', 'power_5', 'magic_5'}
+    default = []
+
+
+class RandomWeaponEffectSpec7(FreeText):
+    """Distribution for choosing random effects after the forced ones"""
+    display_name = "Random Weapon Effect Spec 7"
+    default = ""
+
+
+class RandomWeaponStatBoostSpec7(FreeText):
+    """Distribution for choosing random stat boosts after the forced ones"""
+    display_name = "Random Weapon Stat Boost Spec 7"
+    default = ""
+
+
+class WeaponRandoPool8(OptionList):
+    """Weapons whose effects will be shuffled"""
+    display_name = "Weapon Rando Pool 8"
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'swallow', 'slasher_2', 'rainbow'}
+    default = []
+
+
+class WeaponRandoEffectScheme8(Choice):
+    """How to randomize weapon effects"""
+    display_name = "Weapon Rando Effect Scheme 8"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class WeaponRandoStatBoostScheme8(Choice):
+    """How to randomize weapon stat boosts"""
+    display_name = "Weapon Rando Stat Boost Scheme 8"
+
+    option_no_change = 0
+    option_shuffle = 1
+    option_shuffle_linked = 2
+    option_rdi_random = 3
+    default = 2
+
+
+class ForcedWeaponEffects8(OptionList):
+    """Effects guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Effects 8"
+    valid_keys = {'no_change', 'none', 'wonder', 'doom', 'crisis', 'stop_60', 'slow_60', 'chaos_80', 'stop_80_machines', '4x_crit', '9999_crit', '777_dmg', 'crisis_mp', 'valiant', 'mp_crit', 'mp_crit4x', 'hp_leech_5', 'hp_leech_10', 'mp_leech_2', 'mp_leech_5'}
+    default = []
+
+
+class ForcedWeaponStatBoosts8(OptionList):
+    """Stat boosts guaranteed to exist in the weapon rando pool"""
+    display_name = "Forced Weapon Stat Boosts 8"
+    valid_keys = {'no_change', 'none', 'speed_1', 'hit_2', 'power_2', 'stamina_2', 'magic_2', 'mdef_5', 'speed_3', 'hit_10', 'power_6', 'magic_6', 'mdef_10', 'power_4', 'speed_2', 'mdef_20', 'stamina_6', 'magic_4', 'mdef_12', 'magic_mdef_5', 'power_stamina_10', 'mdef_stamina_10', 'mdef_9', 'magic_10', 'power_10', 'speed_power_3', 'power_5', 'magic_5'}
+    default = []
+
+
+class RandomWeaponEffectSpec8(FreeText):
+    """Distribution for choosing random effects after the forced ones"""
+    display_name = "Random Weapon Effect Spec 8"
+    default = ""
+
+
+class RandomWeaponStatBoostSpec8(FreeText):
+    """Distribution for choosing random stat boosts after the forced ones"""
+    display_name = "Random Weapon Stat Boost Spec 8"
+    default = ""
+
+
 class UsePhysMarle(Toggle):
     """+Hit, Physical arrow tech"""
     display_name = "Use Phys Marle"
@@ -3593,7 +3880,7 @@ class CronoLoseEquipNormalPercent(Range):
     display_name = "Crono Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleLoseEquipNormalPercent(Range):
@@ -3601,7 +3888,7 @@ class MarleLoseEquipNormalPercent(Range):
     display_name = "Marle Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaLoseEquipNormalPercent(Range):
@@ -3609,7 +3896,7 @@ class LuccaLoseEquipNormalPercent(Range):
     display_name = "Lucca Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboLoseEquipNormalPercent(Range):
@@ -3617,7 +3904,7 @@ class RoboLoseEquipNormalPercent(Range):
     display_name = "Robo Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogLoseEquipNormalPercent(Range):
@@ -3625,7 +3912,7 @@ class FrogLoseEquipNormalPercent(Range):
     display_name = "Frog Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaLoseEquipNormalPercent(Range):
@@ -3633,7 +3920,7 @@ class AylaLoseEquipNormalPercent(Range):
     display_name = "Ayla Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusLoseEquipNormalPercent(Range):
@@ -3641,7 +3928,7 @@ class MagusLoseEquipNormalPercent(Range):
     display_name = "Magus Lose Equip Normal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoGainEquipDressPercent(Range):
@@ -3649,7 +3936,7 @@ class CronoGainEquipDressPercent(Range):
     display_name = "Crono Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoLoseEquipDressPercent(Range):
@@ -3657,7 +3944,7 @@ class CronoLoseEquipDressPercent(Range):
     display_name = "Crono Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleGainEquipDressPercent(Range):
@@ -3665,7 +3952,7 @@ class MarleGainEquipDressPercent(Range):
     display_name = "Marle Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleLoseEquipDressPercent(Range):
@@ -3673,7 +3960,7 @@ class MarleLoseEquipDressPercent(Range):
     display_name = "Marle Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaGainEquipDressPercent(Range):
@@ -3681,7 +3968,7 @@ class LuccaGainEquipDressPercent(Range):
     display_name = "Lucca Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaLoseEquipDressPercent(Range):
@@ -3689,7 +3976,7 @@ class LuccaLoseEquipDressPercent(Range):
     display_name = "Lucca Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboGainEquipDressPercent(Range):
@@ -3697,7 +3984,7 @@ class RoboGainEquipDressPercent(Range):
     display_name = "Robo Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboLoseEquipDressPercent(Range):
@@ -3705,7 +3992,7 @@ class RoboLoseEquipDressPercent(Range):
     display_name = "Robo Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogGainEquipDressPercent(Range):
@@ -3713,7 +4000,7 @@ class FrogGainEquipDressPercent(Range):
     display_name = "Frog Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogLoseEquipDressPercent(Range):
@@ -3721,7 +4008,7 @@ class FrogLoseEquipDressPercent(Range):
     display_name = "Frog Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaGainEquipDressPercent(Range):
@@ -3729,7 +4016,7 @@ class AylaGainEquipDressPercent(Range):
     display_name = "Ayla Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaLoseEquipDressPercent(Range):
@@ -3737,7 +4024,7 @@ class AylaLoseEquipDressPercent(Range):
     display_name = "Ayla Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusGainEquipDressPercent(Range):
@@ -3745,7 +4032,7 @@ class MagusGainEquipDressPercent(Range):
     display_name = "Magus Gain Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusLoseEquipDressPercent(Range):
@@ -3753,7 +4040,7 @@ class MagusLoseEquipDressPercent(Range):
     display_name = "Magus Lose Equip Dress Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoGainEquipHeavyArmorPercent(Range):
@@ -3761,7 +4048,7 @@ class CronoGainEquipHeavyArmorPercent(Range):
     display_name = "Crono Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoLoseEquipHeavyArmorPercent(Range):
@@ -3769,7 +4056,7 @@ class CronoLoseEquipHeavyArmorPercent(Range):
     display_name = "Crono Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleGainEquipHeavyArmorPercent(Range):
@@ -3777,7 +4064,7 @@ class MarleGainEquipHeavyArmorPercent(Range):
     display_name = "Marle Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleLoseEquipHeavyArmorPercent(Range):
@@ -3785,7 +4072,7 @@ class MarleLoseEquipHeavyArmorPercent(Range):
     display_name = "Marle Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaGainEquipHeavyArmorPercent(Range):
@@ -3793,7 +4080,7 @@ class LuccaGainEquipHeavyArmorPercent(Range):
     display_name = "Lucca Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaLoseEquipHeavyArmorPercent(Range):
@@ -3801,7 +4088,7 @@ class LuccaLoseEquipHeavyArmorPercent(Range):
     display_name = "Lucca Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboGainEquipHeavyArmorPercent(Range):
@@ -3809,7 +4096,7 @@ class RoboGainEquipHeavyArmorPercent(Range):
     display_name = "Robo Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboLoseEquipHeavyArmorPercent(Range):
@@ -3817,7 +4104,7 @@ class RoboLoseEquipHeavyArmorPercent(Range):
     display_name = "Robo Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogGainEquipHeavyArmorPercent(Range):
@@ -3825,7 +4112,7 @@ class FrogGainEquipHeavyArmorPercent(Range):
     display_name = "Frog Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogLoseEquipHeavyArmorPercent(Range):
@@ -3833,7 +4120,7 @@ class FrogLoseEquipHeavyArmorPercent(Range):
     display_name = "Frog Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaGainEquipHeavyArmorPercent(Range):
@@ -3841,7 +4128,7 @@ class AylaGainEquipHeavyArmorPercent(Range):
     display_name = "Ayla Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaLoseEquipHeavyArmorPercent(Range):
@@ -3849,7 +4136,7 @@ class AylaLoseEquipHeavyArmorPercent(Range):
     display_name = "Ayla Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusGainEquipHeavyArmorPercent(Range):
@@ -3857,7 +4144,7 @@ class MagusGainEquipHeavyArmorPercent(Range):
     display_name = "Magus Gain Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusLoseEquipHeavyArmorPercent(Range):
@@ -3865,7 +4152,7 @@ class MagusLoseEquipHeavyArmorPercent(Range):
     display_name = "Magus Lose Equip Heavy Armor Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoGainEquipPersonalPercent(Range):
@@ -3873,7 +4160,7 @@ class CronoGainEquipPersonalPercent(Range):
     display_name = "Crono Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoLoseEquipPersonalPercent(Range):
@@ -3881,7 +4168,7 @@ class CronoLoseEquipPersonalPercent(Range):
     display_name = "Crono Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleGainEquipPersonalPercent(Range):
@@ -3889,7 +4176,7 @@ class MarleGainEquipPersonalPercent(Range):
     display_name = "Marle Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleLoseEquipPersonalPercent(Range):
@@ -3897,7 +4184,7 @@ class MarleLoseEquipPersonalPercent(Range):
     display_name = "Marle Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaGainEquipPersonalPercent(Range):
@@ -3905,7 +4192,7 @@ class LuccaGainEquipPersonalPercent(Range):
     display_name = "Lucca Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaLoseEquipPersonalPercent(Range):
@@ -3913,7 +4200,7 @@ class LuccaLoseEquipPersonalPercent(Range):
     display_name = "Lucca Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboGainEquipPersonalPercent(Range):
@@ -3921,7 +4208,7 @@ class RoboGainEquipPersonalPercent(Range):
     display_name = "Robo Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboLoseEquipPersonalPercent(Range):
@@ -3929,7 +4216,7 @@ class RoboLoseEquipPersonalPercent(Range):
     display_name = "Robo Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogGainEquipPersonalPercent(Range):
@@ -3937,7 +4224,7 @@ class FrogGainEquipPersonalPercent(Range):
     display_name = "Frog Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogLoseEquipPersonalPercent(Range):
@@ -3945,7 +4232,7 @@ class FrogLoseEquipPersonalPercent(Range):
     display_name = "Frog Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaGainEquipPersonalPercent(Range):
@@ -3953,7 +4240,7 @@ class AylaGainEquipPersonalPercent(Range):
     display_name = "Ayla Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaLoseEquipPersonalPercent(Range):
@@ -3961,7 +4248,7 @@ class AylaLoseEquipPersonalPercent(Range):
     display_name = "Ayla Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusGainEquipPersonalPercent(Range):
@@ -3969,7 +4256,7 @@ class MagusGainEquipPersonalPercent(Range):
     display_name = "Magus Gain Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusLoseEquipPersonalPercent(Range):
@@ -3977,7 +4264,7 @@ class MagusLoseEquipPersonalPercent(Range):
     display_name = "Magus Lose Equip Personal Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class CronoCanEquipPercent(Range):
@@ -3985,7 +4272,7 @@ class CronoCanEquipPercent(Range):
     display_name = "Crono Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MarleCanEquipPercent(Range):
@@ -3993,7 +4280,7 @@ class MarleCanEquipPercent(Range):
     display_name = "Marle Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class LuccaCanEquipPercent(Range):
@@ -4001,7 +4288,7 @@ class LuccaCanEquipPercent(Range):
     display_name = "Lucca Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class RoboCanEquipPercent(Range):
@@ -4009,7 +4296,7 @@ class RoboCanEquipPercent(Range):
     display_name = "Robo Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class FrogCanEquipPercent(Range):
@@ -4017,7 +4304,7 @@ class FrogCanEquipPercent(Range):
     display_name = "Frog Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class AylaCanEquipPercent(Range):
@@ -4025,7 +4312,7 @@ class AylaCanEquipPercent(Range):
     display_name = "Ayla Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 class MagusCanEquipPercent(Range):
@@ -4033,7 +4320,7 @@ class MagusCanEquipPercent(Range):
     display_name = "Magus Can Equip Percent"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 50
 
 
 @dataclass
@@ -4179,6 +4466,8 @@ class CTRDIOptions(PerGameCommonOptions):
     vanilla_boss_spots: VanillaBossSpots
     boss_pool: BossPool
     midboss_pool: MidbossPool
+    lavos_gauntlet_bosses: LavosGauntletBosses
+    lavos_gauntlet_rewards: LavosGauntletRewards
     shop_inventory_randomization: ShopInventoryRandomization
     shop_capacity_randomization: ShopCapacityRandomization
     not_buyable_items: NotBuyableItems
@@ -4336,6 +4625,41 @@ class CTRDIOptions(PerGameCommonOptions):
     forced_weapon_stat_boosts_3: ForcedWeaponStatBoosts3
     random_weapon_effect_spec_3: RandomWeaponEffectSpec3
     random_weapon_stat_boost_spec_3: RandomWeaponStatBoostSpec3
+    weapon_rando_pool_4: WeaponRandoPool4
+    weapon_rando_effect_scheme_4: WeaponRandoEffectScheme4
+    weapon_rando_stat_boost_scheme_4: WeaponRandoStatBoostScheme4
+    forced_weapon_effects_4: ForcedWeaponEffects4
+    forced_weapon_stat_boosts_4: ForcedWeaponStatBoosts4
+    random_weapon_effect_spec_4: RandomWeaponEffectSpec4
+    random_weapon_stat_boost_spec_4: RandomWeaponStatBoostSpec4
+    weapon_rando_pool_5: WeaponRandoPool5
+    weapon_rando_effect_scheme_5: WeaponRandoEffectScheme5
+    weapon_rando_stat_boost_scheme_5: WeaponRandoStatBoostScheme5
+    forced_weapon_effects_5: ForcedWeaponEffects5
+    forced_weapon_stat_boosts_5: ForcedWeaponStatBoosts5
+    random_weapon_effect_spec_5: RandomWeaponEffectSpec5
+    random_weapon_stat_boost_spec_5: RandomWeaponStatBoostSpec5
+    weapon_rando_pool_6: WeaponRandoPool6
+    weapon_rando_effect_scheme_6: WeaponRandoEffectScheme6
+    weapon_rando_stat_boost_scheme_6: WeaponRandoStatBoostScheme6
+    forced_weapon_effects_6: ForcedWeaponEffects6
+    forced_weapon_stat_boosts_6: ForcedWeaponStatBoosts6
+    random_weapon_effect_spec_6: RandomWeaponEffectSpec6
+    random_weapon_stat_boost_spec_6: RandomWeaponStatBoostSpec6
+    weapon_rando_pool_7: WeaponRandoPool7
+    weapon_rando_effect_scheme_7: WeaponRandoEffectScheme7
+    weapon_rando_stat_boost_scheme_7: WeaponRandoStatBoostScheme7
+    forced_weapon_effects_7: ForcedWeaponEffects7
+    forced_weapon_stat_boosts_7: ForcedWeaponStatBoosts7
+    random_weapon_effect_spec_7: RandomWeaponEffectSpec7
+    random_weapon_stat_boost_spec_7: RandomWeaponStatBoostSpec7
+    weapon_rando_pool_8: WeaponRandoPool8
+    weapon_rando_effect_scheme_8: WeaponRandoEffectScheme8
+    weapon_rando_stat_boost_scheme_8: WeaponRandoStatBoostScheme8
+    forced_weapon_effects_8: ForcedWeaponEffects8
+    forced_weapon_stat_boosts_8: ForcedWeaponStatBoosts8
+    random_weapon_effect_spec_8: RandomWeaponEffectSpec8
+    random_weapon_stat_boost_spec_8: RandomWeaponStatBoostSpec8
     use_phys_marle: UsePhysMarle
     use_haste_all: UseHasteAll
     use_phys_lucca: UsePhysLucca
@@ -4628,6 +4952,8 @@ option_groups: list[OptionGroup] = [
             VanillaBossSpots,
             BossPool,
             MidbossPool,
+            LavosGauntletBosses,
+            LavosGauntletRewards,
 
         ]
     ),
@@ -4841,6 +5167,41 @@ option_groups: list[OptionGroup] = [
             ForcedWeaponStatBoosts3,
             RandomWeaponEffectSpec3,
             RandomWeaponStatBoostSpec3,
+            WeaponRandoPool4,
+            WeaponRandoEffectScheme4,
+            WeaponRandoStatBoostScheme4,
+            ForcedWeaponEffects4,
+            ForcedWeaponStatBoosts4,
+            RandomWeaponEffectSpec4,
+            RandomWeaponStatBoostSpec4,
+            WeaponRandoPool5,
+            WeaponRandoEffectScheme5,
+            WeaponRandoStatBoostScheme5,
+            ForcedWeaponEffects5,
+            ForcedWeaponStatBoosts5,
+            RandomWeaponEffectSpec5,
+            RandomWeaponStatBoostSpec5,
+            WeaponRandoPool6,
+            WeaponRandoEffectScheme6,
+            WeaponRandoStatBoostScheme6,
+            ForcedWeaponEffects6,
+            ForcedWeaponStatBoosts6,
+            RandomWeaponEffectSpec6,
+            RandomWeaponStatBoostSpec6,
+            WeaponRandoPool7,
+            WeaponRandoEffectScheme7,
+            WeaponRandoStatBoostScheme7,
+            ForcedWeaponEffects7,
+            ForcedWeaponStatBoosts7,
+            RandomWeaponEffectSpec7,
+            RandomWeaponStatBoostSpec7,
+            WeaponRandoPool8,
+            WeaponRandoEffectScheme8,
+            WeaponRandoStatBoostScheme8,
+            ForcedWeaponEffects8,
+            ForcedWeaponStatBoosts8,
+            RandomWeaponEffectSpec8,
+            RandomWeaponStatBoostSpec8,
 
         ]
     ),
