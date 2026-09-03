@@ -10,7 +10,7 @@ from ctrando.common import randostate
 from ctrando.common.ctenums import CharID, ItemID
 from ctrando.entranceshuffler import entrancefiller
 
-from BaseClasses import Item, ItemClassification
+from BaseClasses import CollectionState, Item, ItemClassification
 
 from .Locations import locs_to_skip
 
@@ -55,16 +55,40 @@ name_to_ds_item: dict[str, DSItem] = {
     name: enum for enum, name in ds_item_to_name.items()
 }
 
+# Mapping of items to their progressive counterparts
+progressive_items_map: dict[str, str] = {
+    str(ItemID.PENDANT): "Progressive Pendant",
+    str(ItemID.PENDANT_CHARGE): "Progressive Pendant",
+    str(ItemID.MASAMUNE_1): "Progressive Masamune",
+    str(ItemID.MASAMUNE_2): "Progressive Masamune",
+    str(ItemID.PRISMSHARD): "Progressive Rainbow Shell/Prism Shard",
+    str(ItemID.RAINBOW_SHELL): "Progressive Rainbow Shell/Prism Shard",
+    str(ItemID.C_TRIGGER): "Progressive C.Trigger/Clone",
+    str(ItemID.CLONE): "Progressive C.Trigger/Clone",
+    str(ItemID.BIKE_KEY): "Progressive Bike Key/Race Log",
+    str(ItemID.RACE_LOG): "Progressive Bike Key/Race Log",
+}
+
+# Map upgraded progressive items to their base items.
+# We only send base items to the game and it sorts out the rest
+progressive_item_upgrades: dict[int, ItemID] = {
+    ItemID.PENDANT_CHARGE: ItemID.PENDANT,
+    ItemID.MASAMUNE_2: ItemID.MASAMUNE_1,
+    ItemID.PRISMSHARD: ItemID.RAINBOW_SHELL,
+    ItemID.CLONE: ItemID.C_TRIGGER,
+    ItemID.RACE_LOG: ItemID.BIKE_KEY,
+}
+
 _MAX_NORMAL_ITEM_ID = 0xFF
 _DS_ITEM_BASE = 0x100
 _CHAR_ITEM_BASE = 0x120
 _TECH_LEVEL_ITEM_BASE = 0x130
 _OTHER_ITEM_BASE = 0x140
+_PROGRESSIVE_ITEM_BASE = 0x150
 
 def _build_item_mappings() -> dict[str, int]:
     """
-    Build the item and location name-to-ID mappings.
-    Also adds 7 character items and their associated tech level items
+    Build the item name-to-ID mappings.
     """
     # Basic item mapping
     item_name_to_id = {str(item): ITEM_ID_BASE + item for item in ItemID}
@@ -82,21 +106,16 @@ def _build_item_mappings() -> dict[str, int]:
     for i, name in enumerate(tech_level_names):
         item_name_to_id[name] = ITEM_ID_BASE + _TECH_LEVEL_ITEM_BASE + i
 
+    # Add items to represent progressive items
+    for i, item in enumerate(progressive_item_upgrades.keys()):
+        name = progressive_items_map[str(item)]
+        item_name_to_id[name] = ITEM_ID_BASE + _PROGRESSIVE_ITEM_BASE + i
+
     return item_name_to_id
 
 item_name_to_id = _build_item_mappings()
 id_to_item_name = {v: k for k, v in item_name_to_id.items()}
 item_name_to_rdi_type: dict[str, ItemID] = {str(x): x for x in ItemID}
-
-# Map upgraded progressive items to their base items.
-# We only send base items to the game and it sorts out the rest
-progressive_items: dict[int, ItemID] = {
-    ItemID.PENDANT_CHARGE: ItemID.PENDANT,
-    ItemID.MASAMUNE_2: ItemID.MASAMUNE_1,
-    ItemID.PRISMSHARD: ItemID.RAINBOW_SHELL,
-    ItemID.CLONE: ItemID.C_TRIGGER,
-    ItemID.RACE_LOG: ItemID.BIKE_KEY,
-}
 
 def is_normal_item_reward(item_id: int) -> bool:
     """
@@ -127,6 +146,31 @@ def is_ds_item_reward(item_id: int) -> bool:
     base_id = ITEM_ID_BASE + _DS_ITEM_BASE
     end_id = base_id + len(DSItem)
     return (item_id >= base_id) and (item_id < end_id)
+
+def is_progressive_item_reward(item_id: int) -> bool:
+    """
+    Check if this is a special progressive item placeholder
+    """
+    base_id = ITEM_ID_BASE + _PROGRESSIVE_ITEM_BASE
+    end_id = base_id + len(progressive_item_upgrades.keys())
+    return (item_id >= base_id) and (item_id < end_id)
+
+def get_base_progressive_item(item_id: int) -> ItemID:
+    """
+    Given a progressive item placeholder, get the base item.
+    """
+    item_name = id_to_item_name[item_id]
+    if item_name == "Progressive Pendant":
+        return ItemID.PENDANT
+    if item_name == "Progressive Masamune":
+        return ItemID.MASAMUNE_1
+    if item_name == "Progressive Rainbow Shell/Prism Shard":
+        return ItemID.RAINBOW_SHELL
+    if item_name == "Progressive C.Trigger/Clone":
+        return ItemID.C_TRIGGER
+    if item_name == "Progressive Bike Key/Race Log":
+        return ItemID.BIKE_KEY
+    raise Exception(f"Invalid progressive item: {item_name}")
 
 def convert_to_char_id(item_id: int) -> CharID:
     """
@@ -247,6 +291,13 @@ def create_items(config: randostate.ConfigState, player: int, ds_replacements: d
                 if ds_item_name == ds_item_to_name[DSItem.CHAMPIONS_BADGE]:
                     item_class = ItemClassification.progression
                 items.append(Item(ds_item_name, item_class, ds_item_id, player))
+            elif str(value) in progressive_items_map:
+                # This is a progressive item. Add the special progressive item version
+                # instead of the base game version.
+                item_name = progressive_items_map[str(value)]
+                item_code = item_name_to_id[item_name]
+                item_class = ItemClassification.progression
+                items.append(Item(item_name, item_class, item_code, player))
             else:
                 # Normal item
                 items.append(create_ap_item(value, player))
@@ -269,3 +320,38 @@ def create_ap_item(item: ItemID, player: int) -> Item:
 
     item_code = ITEM_ID_BASE + item
     return Item(str(item), classification, item_code, player)
+
+def collect_item(state: CollectionState, item: Item, remove: bool=False) -> str | None:
+    """
+    collect_item handles the override from the AutoWorld class.
+    It assists with proper progressive item handling.
+    """
+
+    def handle_progressive_item(prog1: ItemID, prog2: ItemID) -> str | None:
+        # NOTE: I'm not entirely sure what the remove arg is for, but I'm
+        #       basically just doing what ALttP does.
+        if state.has(str(prog2), item.player):
+            # Currently at stage 2
+            return str(prog2) if remove else None
+
+        if state.has(str(prog1), item.player):
+            # Currently at stage 1
+            return str(prog1) if remove else str(prog2)
+
+        # Currently none obtained
+        return None if remove else str(prog1)
+
+    item_name = item.name
+    if item_name == "Progressive Pendant":
+        return handle_progressive_item(ItemID.PENDANT, ItemID.PENDANT_CHARGE)
+    if item_name == "Progressive Masamune":
+        return handle_progressive_item(ItemID.MASAMUNE_1, ItemID.MASAMUNE_2)
+    if item_name == "Progressive Rainbow Shell/Prism Shard":
+        return handle_progressive_item(ItemID.RAINBOW_SHELL, ItemID.PRISMSHARD)
+    if item_name == "Progressive C.Trigger/Clone":
+        return handle_progressive_item(ItemID.C_TRIGGER, ItemID.CLONE)
+    if item_name == "Progressive Bike Key/Race Log":
+        return handle_progressive_item(ItemID.BIKE_KEY, ItemID.RACE_LOG)
+    if item.advancement:
+        return item.name
+    return None

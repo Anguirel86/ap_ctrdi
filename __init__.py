@@ -19,7 +19,7 @@ from ctrando.treasures import treasuretypes as tty
 # Archipelago imports
 import settings
 import worlds
-from BaseClasses import Item, ItemClassification, Location, MultiWorld, Tutorial
+from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Tutorial
 from Options import Choice, FreeText, OptionList, Range, Toggle
 from Utils import read_snes_rom
 from worlds.AutoWorld import WebWorld, World
@@ -240,6 +240,10 @@ class CTRDIWorld(World):
         patch.write()  # pyright: ignore[reportUnknownMemberType]
         os.unlink(output_path)
 
+    @typing.override
+    def collect_item(self, state: CollectionState, item: Item, remove: bool=False) -> str | None:
+        return Items.collect_item(state, item, remove)
+
     def _convert_setting_value(self, flag_name: str, spec):
         """
         Convert a value for use in an RDI settings dictionary
@@ -359,13 +363,13 @@ class CTRDIWorld(World):
                     if Items.is_ds_item_reward(loc.item.code):
                         # Convert from the DS item to the base item it replaced
                         item_id = ItemID(self.ds_replacements[loc.item.code] - Items.ITEM_ID_BASE)
+                    elif Items.is_progressive_item_reward(loc.item.code):
+                        # Replace progressive items with their base item and let
+                        # the ROM side handle the upgrade.
+                        item_id = Items.get_base_progressive_item(loc.item.code)
                     else:
                         item_id = Items.item_name_to_rdi_type[loc.item.name]
 
-                        # Replace progressive items with their base item and let
-                        # the ROM side handle the upgrade.
-                        if item_id in Items.progressive_items:
-                            item_id = Items.progressive_items[item_id]
 
                     self.config.treasure_assignment[tid] = item_id
             else:

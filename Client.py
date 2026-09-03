@@ -356,12 +356,6 @@ class CTRDIClient(SNIClient):
 
         if Items.is_normal_item_reward(item_id):
             base_item = item_id - Items.ITEM_ID_BASE
-
-            # Check if this is a progressive item. We only send the base version to the game
-            # and it sorts out the upgrades.
-            if base_item in Items.progressive_items:
-                base_item = int(Items.progressive_items[base_item])
-
             return (0x2000 | base_item)
 
         if Items.is_char_reward(item_id):
@@ -380,6 +374,11 @@ class CTRDIClient(SNIClient):
                 return (0x2000 | replaced_item)
             raise Exception(f"DS replacement item not registered: {item_id}")
 
+        if Items.is_progressive_item_reward(item_id):
+            # Always deliver the base version of progressive items
+            # The game will handle upgrading if necessary
+            base_item = int(Items.get_base_progressive_item(item_id))
+            return (0x2000 | base_item)
 
         raise Exception(f"Unknown item ID {item_id}")
 
