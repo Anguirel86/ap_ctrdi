@@ -10,13 +10,14 @@ Either clone it into the archipelado worlds directory, or clone it elsewhere and
   - `ln -sf apctrdi Archipelago/worlds/ctrdi`
 
 ### Clone the ctrando repo:
-NOTE: The multiworld updates arent in the main repo yet
-  - `git clone -b multiworld https://github.com/Anguirel86/ctrando.git`
+  Multiworld updates are part of the main ctrando project repository
+  The ctrando repo is submoduled into this project for version traceability.
+   - `git submodule update --recursive --init`
 
 ### Set up a virtual environment and install the rando (sub in python version as appropriate)
   - `python3.12 -m venv venv`
   - `source venv/bin/activate`
-  - `pip install ctrando/`
+  - `pip install submodules/ctrando/`
 
 ### Run the Archipelago launcher.
 This will also install a bunch of dependencies, so make sure you're in your venv

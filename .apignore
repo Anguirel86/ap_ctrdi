@@ -1,2 +1,5 @@
 tools/
-NOTES.txt
+docs/dev_docs/
+submodules/
+__pycache__
+ctrando.zip

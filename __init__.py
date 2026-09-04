@@ -29,10 +29,6 @@ from . import Items, Locations
 from .Client import CTRDIClient  # noqa: F401  # pyright: ignore[reportUnusedImport]
 from .Options import CTRDIOptions, option_groups
 
-# TODO task list:
-#  - Create tutorial docs
-
-
 rdi_logger = logging.getLogger("RDI")
 
 CTUSA_MD5_HASH = "a2bc447961e52fd2227baed164f729dc"
