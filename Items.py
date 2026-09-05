@@ -19,6 +19,8 @@ ITEM_ID_BASE = 50_350_000
 
 rdi_logger = logging.getLogger("RDI")
 
+key_item_list = [*entrancefiller.get_forced_key_items(), ItemID.JETSOFTIME, ItemID.MASAMUNE_2]
+
 _char_names = ["Crono", "Marle", "Lucca", "Robo", "Frog", "Ayla", "Magus"]
 
 # Mapping of DS items to their in-game names.
@@ -312,7 +314,7 @@ def create_ap_item(item: ItemID, player: int) -> Item:
     Create an AP item from a CTRDI ItemID
     """
     # TODO: Handle item classification for additional key items
-    if item in entrancefiller.get_forced_key_items() or item == ItemID.JETSOFTIME:
+    if item in key_item_list:
         classification = ItemClassification.progression
     else:
         classification = ItemClassification.filler

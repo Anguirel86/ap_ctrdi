@@ -6,7 +6,14 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ctrando.arguments.gearrandooptions import DSItem
+from BaseClasses import (
+    CollectionState,
+    Item,
+    ItemClassification,
+    Location,
+    MultiWorld,
+    Region,
+)
 from ctrando.arguments import arguments
 from ctrando.bosses.bosstypes import BossSpotID
 from ctrando.common import memory, randostate
@@ -17,7 +24,9 @@ from ctrando.entranceshuffler.regionmap import ExitConnector, RegionConnector
 from ctrando.logic import logictypes
 from ctrando.treasures import treasuretypes as tty
 
-from BaseClasses import CollectionState, Item, ItemClassification, Location, MultiWorld, Region
+
+class RDILocationException(Exception):
+    """Custom exception for RDI location errors"""
 
 """Offset to give CTRDI locations a unique item range in AP"""
 LOC_ID_BASE = 50_350_000
@@ -115,6 +124,7 @@ def create_victory_rule(player: int, rdi_settings: arguments.Settings) -> Callab
         if has_flight and algetty_portal_open and omen_open:
             return True
 
+        # No victory rules were met
         return False
 
     return victory_rule
@@ -131,15 +141,17 @@ def create_flag_events(
 
     Ignore shop rewards
     """
+    valid_reward_types = (
+        logictypes.ScriptReward,
+        logictypes.StrangeReward,
+        memory.Flags,
+        BossSpotID,
+        ItemID)
     loc_cache = []
     for loc_region in config.region_map.loc_region_dict.values():
         reward_list = list(loc_region.reward_spots) + loc_region.region_rewards
         for reward in reward_list:
-            if isinstance(reward, logictypes.ScriptReward) or \
-                    isinstance(reward, logictypes.StrangeReward) or \
-                    isinstance(reward, memory.Flags) or \
-                    isinstance(reward, BossSpotID) or \
-                    isinstance(reward, ItemID):
+            if isinstance(reward, valid_reward_types):
 
                 create_event_loc_item_pair(
                     str(reward), region_dict[loc_region.name].ap_region, player, loc_cache)
@@ -166,6 +178,7 @@ def create_locations_for_regions(
     region_dict: dict[str, RegionData],
     config: randostate.ConfigState,
     rdi_settings: arguments.Settings,
+    key_item_list: list[ItemID],
     player: int):
     """
     Create corresponding locations for each RDI location and
@@ -175,15 +188,46 @@ def create_locations_for_regions(
                         list(rdi_settings.logic_options.incentive_spots)
     excluded_spots = rdi_settings.logic_options.excluded_spots
 
+    if len(progression_spots) > 0:
+        # RDI has a concept of "loose key items". The user can specify spots that
+        # are forced to hold progression, but after those are used up, key items
+        # can be placed in any non-restricted location. There is also a separate
+        # list where the user can specify additional loose key items.
+        #
+        # If the user specified progression spots, then we need to query the
+        # rando-config and determine if we need to add any additional "loose" spots.
+        chosen_spots: list[TreasureID] = []
+        for region_data in region_dict.values():
+            if not isinstance(region_data.rdi_region, LocRegion):
+                continue
+
+            for loc in region_data.rdi_region.reward_spots:
+                if isinstance(loc, TreasureID) and not loc in locs_to_skip:
+                    treasure = config.treasure_assignment[loc]
+                    if treasure in key_item_list:
+                        chosen_spots.append(loc)
+
+        if len(chosen_spots) > len(progression_spots):
+            # The randomizer had to place more key items than the number
+            # of user chosen progression locations. Use the randomizer list instead
+            # since it will be a superset of the progression_spots list and will
+            # respect all of the other logical choices in the player settings.
+            progression_spots = chosen_spots
+
+
+    # Helper rule function for non-progression locations
     def non_progression(item: Item):
         return item.classification in [ItemClassification.filler,
                                        ItemClassification.useful,
                                        ItemClassification.trap]
 
+    # Helper rule function for junk-only locations
     def junk_only(item: Item):
         return item.classification in [ItemClassification.filler,
                                        ItemClassification.trap]
 
+    # Loop over the regions and pull out valid locations and
+    # set the appropriate item rule.
     for region_data in region_dict.values():
         if not isinstance(region_data.rdi_region, LocRegion):
             continue
@@ -230,13 +274,13 @@ def create_region_map(
     """
     region_dict: dict[str, RegionData] = {}
 
-    for name in config.region_map.name_connector_dict.keys():
+    for name in config.region_map.name_connector_dict:
         if name in config.region_map.ow_region_dict:
             rdi_region = config.region_map.ow_region_dict[name]
         elif name in config.region_map.loc_region_dict:
             rdi_region = config.region_map.loc_region_dict[name]
         else:
-            raise Exception(f"Region not found: {name}")
+            raise RDILocationException(f"Region not found: {name}")
 
         ap_region = Region(name, player, multiworld)
         region_dict[name] = RegionData(

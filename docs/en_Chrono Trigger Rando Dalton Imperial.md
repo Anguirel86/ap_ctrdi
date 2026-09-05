@@ -32,7 +32,7 @@ The randomized locations include chests, event/quest rewards and tab locations.
 
 Any of the items which can be shuffled may also be placed into another player's world.
 
-## What does another world's item look like in LttP?
+## What does another world's item look like in RDI?
 
 Items belonging to other worlds will be noted in the treasure text when opening a chest or acquiring an item. The text will state what the treasure is and what player it is being sent to. In the cases where the item is visible in game, it will be represented by a blue sparkle.
 
@@ -45,7 +45,3 @@ Items are silently delivered into the player's inventory. Keep an eye on the cli
 This project would not have been possible without:
 - Pseudoarc for the Rando-Dalton Imperial (ctrando) project (https://github.com/Pseudoarc/ctrando)
 - The Rando-Dalton Imperial community for testing and feedback (https://ctrando.com)
-
-## Known Issues
-
-- Progressive items (ie: Pendant -> Pendant Charge) will show up as the actual item in the client, but will be downgraded to their base version when delivered in game. Receiving a Pendant Charge when you do not have the Pendant will result in the game granting you a normal Pendant.  Later, when the Pendant item is found, it will upgrade to Pendant Charge once delivered in game. This pattern holds true for all progressive items.

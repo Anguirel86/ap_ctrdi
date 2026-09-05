@@ -161,7 +161,8 @@ class CTRDIWorld(World):
         region_dict = Locations.create_region_map(self.config, self.multiworld, self.player)
 
         # Create treasure locations and game/logic event locations
-        Locations.create_locations_for_regions(region_dict, self.config, self.rdi_settings, self.player)
+        Locations.create_locations_for_regions(
+            region_dict, self.config, self.rdi_settings, Items.key_item_list, self.player)
         Locations.create_recruit_events(region_dict, self.config, self.player)
         Locations.create_flag_events(region_dict, self.config, self.player)
 
