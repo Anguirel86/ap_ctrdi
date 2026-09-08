@@ -525,7 +525,7 @@ class BalanceTechMps(Toggle):
 class CustomDamageMps(OptionList):
     """Custom pool of mps for damage techs"""
     display_name = "Custom Damage Mps"
-    valid_keys = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'}
+    valid_keys = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'}
     default = []
 
 
@@ -1021,14 +1021,14 @@ class DecayFactor(Range):
 class StarterRewards(OptionList):
     """Rewards to grant at game start"""
     display_name = "Starter Rewards"
-    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'pacifist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'bent_sword', 'bent_hilt', 'swallow', 'slasher_2', 'rainbow', 'hide_tunic', 'karate_gi', 'bronzemail', 'maidensuit', 'iron_suit', 'titan_vest', 'gold_suit', 'ruby_vest', 'dark_mail', 'mist_robe', 'meso_mail', 'lumin_robe', 'flash_mail', 'lode_vest', 'aeon_suit', 'zodiaccape', 'nova_armor', 'prismdress', 'moon_armor', 'ruby_armor', 'ravenarmor', 'gloom_cape', 'white_mail', 'black_mail', 'blue_mail', 'red_mail', 'white_vest', 'black_vest', 'blue_vest', 'red_vest', 'taban_vest', 'taban_suit', 'hide_cap', 'bronzehelm', 'iron_helm', 'beret', 'gold_helm', 'rock_helm', 'ceratopper', 'glow_helm', 'lode_helm', 'aeon_helm', 'prism_helm', 'doom_helm', 'dark_helm', 'gloom_helm', 'safe_helm', 'taban_helm', 'sight_cap', 'memory_cap', 'time_hat', 'vigil_hat', 'ozziepants', 'haste_helm', 'rbow_helm', 'mermaidcap', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'valor_crest', 'dragon_tear', 'sun_shades', 'prismspecs', 'tonic', 'mid_tonic', 'full_tonic', 'ether', 'mid_ether', 'full_ether', 'elixir', 'hyperether', 'megaelixir', 'heal', 'revive', 'shelter', 'power_meal', 'lapis', 'barrier', 'shield', 'power_tab', 'magic_tab', 'speed_tab', 'petal', 'fang', 'horn', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'dreamstone', 'race_log', 'moon_stone', 'sun_stone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'jetsoftime', 'pendant_charge', 'rainbow_shell', 'epoch', 'flight', 'dark_ages', 'future', 'last_village_portal', 'end_of_time', 'bucket', 'apocalypse', 'omen_present', 'omen_last_village', 'dark_ages_pillar', 'bangor_pillar', 'truce_pillar', 'desert', 'pacifist'}
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'pacifist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'bent_sword', 'bent_hilt', 'swallow', 'slasher_2', 'rainbow', 'hide_tunic', 'karate_gi', 'bronzemail', 'maidensuit', 'iron_suit', 'titan_vest', 'gold_suit', 'ruby_vest', 'dark_mail', 'mist_robe', 'meso_mail', 'lumin_robe', 'flash_mail', 'lode_vest', 'aeon_suit', 'zodiaccape', 'nova_armor', 'prismdress', 'moon_armor', 'ruby_armor', 'ravenarmor', 'gloom_cape', 'white_mail', 'black_mail', 'blue_mail', 'red_mail', 'white_vest', 'black_vest', 'blue_vest', 'red_vest', 'taban_vest', 'taban_suit', 'hide_cap', 'bronzehelm', 'iron_helm', 'beret', 'gold_helm', 'rock_helm', 'ceratopper', 'glow_helm', 'lode_helm', 'aeon_helm', 'prism_helm', 'doom_helm', 'dark_helm', 'gloom_helm', 'safe_helm', 'taban_helm', 'sight_cap', 'memory_cap', 'time_hat', 'vigil_hat', 'ozziepants', 'haste_helm', 'rbow_helm', 'mermaidcap', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'valor_crest', 'dragon_tear', 'sun_shades', 'prismspecs', 'tonic', 'mid_tonic', 'full_tonic', 'ether', 'mid_ether', 'full_ether', 'elixir', 'hyperether', 'megaelixir', 'heal', 'revive', 'shelter', 'power_meal', 'lapis', 'barrier', 'shield', 'power_tab', 'magic_tab', 'speed_tab', 'petal', 'fang', 'horn', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'dreamstone', 'race_log', 'moon_stone', 'sun_stone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'jetsoftime', 'pendant_charge', 'rainbow_shell', 'epoch', 'flight', 'dark_ages', 'future', 'last_village_portal', 'end_of_time', 'bucket', 'apocalypse', 'omen_present', 'omen_last_village', 'dark_ages_pillar', 'bangor_pillar', 'truce_pillar', 'desert', 'proto_door', 'pacifist'}
     default = ['epoch']
 
 
 class OutOfLogicStarterRewards(OptionList):
     """Rewards to grant at game start which are not considered by logic"""
     display_name = "Out Of Logic Starter Rewards"
-    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'pacifist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'bent_sword', 'bent_hilt', 'swallow', 'slasher_2', 'rainbow', 'hide_tunic', 'karate_gi', 'bronzemail', 'maidensuit', 'iron_suit', 'titan_vest', 'gold_suit', 'ruby_vest', 'dark_mail', 'mist_robe', 'meso_mail', 'lumin_robe', 'flash_mail', 'lode_vest', 'aeon_suit', 'zodiaccape', 'nova_armor', 'prismdress', 'moon_armor', 'ruby_armor', 'ravenarmor', 'gloom_cape', 'white_mail', 'black_mail', 'blue_mail', 'red_mail', 'white_vest', 'black_vest', 'blue_vest', 'red_vest', 'taban_vest', 'taban_suit', 'hide_cap', 'bronzehelm', 'iron_helm', 'beret', 'gold_helm', 'rock_helm', 'ceratopper', 'glow_helm', 'lode_helm', 'aeon_helm', 'prism_helm', 'doom_helm', 'dark_helm', 'gloom_helm', 'safe_helm', 'taban_helm', 'sight_cap', 'memory_cap', 'time_hat', 'vigil_hat', 'ozziepants', 'haste_helm', 'rbow_helm', 'mermaidcap', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'valor_crest', 'dragon_tear', 'sun_shades', 'prismspecs', 'tonic', 'mid_tonic', 'full_tonic', 'ether', 'mid_ether', 'full_ether', 'elixir', 'hyperether', 'megaelixir', 'heal', 'revive', 'shelter', 'power_meal', 'lapis', 'barrier', 'shield', 'power_tab', 'magic_tab', 'speed_tab', 'petal', 'fang', 'horn', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'dreamstone', 'race_log', 'moon_stone', 'sun_stone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'jetsoftime', 'pendant_charge', 'rainbow_shell', 'epoch', 'flight', 'dark_ages', 'future', 'last_village_portal', 'end_of_time', 'bucket', 'apocalypse', 'omen_present', 'omen_last_village', 'dark_ages_pillar', 'bangor_pillar', 'truce_pillar', 'desert', 'pacifist'}
+    valid_keys = {'wood_sword', 'iron_blade', 'steelsaber', 'lode_sword', 'red_katana', 'flint_edge', 'dark_saber', 'aeon_blade', 'demon_edge', 'alloyblade', 'star_sword', 'vedicblade', 'kali_blade', 'shiva_edge', 'bolt_sword', 'slasher', 'bronze_bow', 'iron_bow', 'lode_bow', 'robin_bow', 'sage_bow', 'dream_bow', 'cometarrow', 'sonicarrow', 'valkerye', 'siren', 'air_gun', 'dart_gun', 'auto_gun', 'picomagnum', 'plasma_gun', 'ruby_gun', 'dream_gun', 'megablast', 'shock_wave', 'wondershot', 'graedus', 'tin_arm', 'hammer_arm', 'miragehand', 'stone_arm', 'doomfinger', 'magma_hand', 'megatonarm', 'big_hand', 'kaiser_arm', 'giga_arm', 'terra_arm', 'crisis_arm', 'bronzeedge', 'iron_sword', 'masamune_1', 'flashblade', 'pearl_edge', 'rune_blade', 'bravesword', 'masamune_2', 'demon_hit', 'fist', 'fist_2', 'fist_3', 'iron_fist', 'bronzefist', 'pacifist', 'darkscythe', 'hurricane', 'starscythe', 'doomsickle', 'mop', 'bent_sword', 'bent_hilt', 'swallow', 'slasher_2', 'rainbow', 'hide_tunic', 'karate_gi', 'bronzemail', 'maidensuit', 'iron_suit', 'titan_vest', 'gold_suit', 'ruby_vest', 'dark_mail', 'mist_robe', 'meso_mail', 'lumin_robe', 'flash_mail', 'lode_vest', 'aeon_suit', 'zodiaccape', 'nova_armor', 'prismdress', 'moon_armor', 'ruby_armor', 'ravenarmor', 'gloom_cape', 'white_mail', 'black_mail', 'blue_mail', 'red_mail', 'white_vest', 'black_vest', 'blue_vest', 'red_vest', 'taban_vest', 'taban_suit', 'hide_cap', 'bronzehelm', 'iron_helm', 'beret', 'gold_helm', 'rock_helm', 'ceratopper', 'glow_helm', 'lode_helm', 'aeon_helm', 'prism_helm', 'doom_helm', 'dark_helm', 'gloom_helm', 'safe_helm', 'taban_helm', 'sight_cap', 'memory_cap', 'time_hat', 'vigil_hat', 'ozziepants', 'haste_helm', 'rbow_helm', 'mermaidcap', 'bandana', 'ribbon', 'powerglove', 'defender', 'magicscarf', 'amulet', 'dash_ring', 'hit_ring', 'power_ring', 'magic_ring', 'wall_ring', 'silvererng', 'gold_erng', 'silverstud', 'gold_stud', 'sightscope', 'charm_top', 'rage_band', 'frenzyband', 'third_eye', 'wallet', 'greendream', 'berserker', 'powerscarf', 'speed_belt', 'black_rock', 'blue_rock', 'silverrock', 'white_rock', 'gold_rock', 'hero_medal', 'musclering', 'flea_vest', 'magic_seal', 'power_seal', 'valor_crest', 'dragon_tear', 'sun_shades', 'prismspecs', 'tonic', 'mid_tonic', 'full_tonic', 'ether', 'mid_ether', 'full_ether', 'elixir', 'hyperether', 'megaelixir', 'heal', 'revive', 'shelter', 'power_meal', 'lapis', 'barrier', 'shield', 'power_tab', 'magic_tab', 'speed_tab', 'petal', 'fang', 'horn', 'feather', 'seed', 'bike_key', 'pendant', 'gate_key', 'prismshard', 'c_trigger', 'tools', 'jerky', 'dreamstone', 'race_log', 'moon_stone', 'sun_stone', 'ruby_knife', 'yakra_key', 'clone', 'tomas_pop', 'petals_2', 'fangs_2', 'horns_2', 'feathers_2', 'jetsoftime', 'pendant_charge', 'rainbow_shell', 'epoch', 'flight', 'dark_ages', 'future', 'last_village_portal', 'end_of_time', 'bucket', 'apocalypse', 'omen_present', 'omen_last_village', 'dark_ages_pillar', 'bangor_pillar', 'truce_pillar', 'desert', 'proto_door', 'pacifist'}
     default = []
 
 
@@ -1080,6 +1080,21 @@ class MagusCastleLogicalConnection(Toggle):
     display_name = "Magus Castle Logical Connection"
 
 
+class ForceEarlyFlight(Toggle):
+    """If jets_of_time is on, the jets will be logically available before blackbird"""
+    display_name = "Force Early Flight"
+
+
+class MagusSequenceBreakOceanPalace(Toggle):
+    """Magus opening the Zeal throneroom door is in logic."""
+    display_name = "Magus Sequence Break Ocean Palace"
+
+
+class MagusLogicalMagusCastle(Toggle):
+    """Magus is logically required for Magus's castle."""
+    display_name = "Magus Logical Magus Castle"
+
+
 class BossRandomizationType(Choice):
     """How bosses should be assigned to spots"""
     display_name = "Boss Randomization Type"
@@ -1110,8 +1125,8 @@ class VanillaBossSpots(OptionList):
 class BossPool(OptionList):
     """Bosses to include in assignment (only when boss type is "random")"""
     display_name = "Boss Pool"
-    valid_keys = {'dalton_plus', 'flea', 'flea_plus', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'super_slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape'}
-    default = ['dalton_plus', 'flea', 'flea_plus', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'super_slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape']
+    valid_keys = {'dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape'}
+    default = ['dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape']
 
 
 class MidbossPool(OptionList):
@@ -1124,7 +1139,7 @@ class MidbossPool(OptionList):
 class LavosGauntletBosses(OptionList):
     """Bosses to fight in the Lavos gauntlet (max 9)"""
     display_name = "Lavos Gauntlet Bosses"
-    valid_keys = {'dalton_plus', 'flea', 'flea_plus', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash', 'super_slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_nc', 'black_tyrano', 'magus', 'zeal2', 'mammon_machine'}
+    valid_keys = {'dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_nc', 'black_tyrano', 'magus', 'zeal2', 'mammon_machine'}
     default = ['dragon_tank', 'guardian', 'heckran', 'zombor', 'masa_mune', 'nizbel', 'magus', 'black_tyrano', 'giga_gaia']
 
 
@@ -4461,6 +4476,9 @@ class CTRDIOptions(PerGameCommonOptions):
     block_zenan_600: BlockZenan600
     block_zenan_1000: BlockZenan1000
     magus_castle_logical_connection: MagusCastleLogicalConnection
+    force_early_flight: ForceEarlyFlight
+    magus_sequence_break_ocean_palace: MagusSequenceBreakOceanPalace
+    magus_logical_magus_castle: MagusLogicalMagusCastle
     boss_randomization_type: BossRandomizationType
     midboss_randomization_type: MidbossRandomizationType
     vanilla_boss_spots: VanillaBossSpots
@@ -4940,6 +4958,9 @@ option_groups: list[OptionGroup] = [
             BlockZenan600,
             BlockZenan1000,
             MagusCastleLogicalConnection,
+            ForceEarlyFlight,
+            MagusSequenceBreakOceanPalace,
+            MagusLogicalMagusCastle,
 
         ]
     ),
