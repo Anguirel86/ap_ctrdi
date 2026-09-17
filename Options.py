@@ -1271,7 +1271,7 @@ class NumGauntletObjectives(Range):
 
 
 class NumTimegaugeObjectives(Range):
-    """Number of objectives needed to unlock the bucket in the End of Time"""
+    """Number of objectives needed to unlock 1999 on the Epoch's time gauge"""
     display_name = "Num Timegauge Objectives"
     range_start = 0
     range_end = 8
