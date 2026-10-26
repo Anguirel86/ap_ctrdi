@@ -20,6 +20,7 @@ ITEM_ID_BASE = 50_350_000
 rdi_logger = logging.getLogger("RDI")
 
 key_item_list = [*entrancefiller.get_forced_key_items(), ItemID.JETSOFTIME, ItemID.MASAMUNE_2]
+key_item_ids = [x + ITEM_ID_BASE for x in key_item_list]
 
 _char_names = ["Crono", "Marle", "Lucca", "Robo", "Frog", "Ayla", "Magus"]
 
@@ -302,14 +303,14 @@ def create_items(config: randostate.ConfigState, player: int, ds_replacements: d
                 items.append(Item(item_name, item_class, item_code, player))
             else:
                 # Normal item
-                items.append(create_ap_item(value, player))
+                items.append(create_item_from_item_id(value, player))
         else:
             raise Exception("unknown type while creating APItems")
 
     return items
 
 
-def create_ap_item(item: ItemID, player: int) -> Item:
+def create_item_from_item_id(item: ItemID, player: int) -> Item:
     """
     Create an AP item from a CTRDI ItemID
     """
@@ -322,6 +323,36 @@ def create_ap_item(item: ItemID, player: int) -> Item:
 
     item_code = ITEM_ID_BASE + item
     return Item(str(item), classification, item_code, player)
+
+def create_item_from_name(name: str, player: int) -> Item:
+    """
+    Create an AP item from the item name
+    """
+    # TODO: Incorporate this more into the rest of the code
+    #       rather than try to recreate the rest of the rules here
+    if name not in item_name_to_id:
+        raise Exception(f"Unknown item: {name}")
+    item_id = item_name_to_id[name]
+
+    classification = ItemClassification.filler
+    if is_tech_level_reward(item_id):
+        classification = ItemClassification.useful
+    elif is_ds_item_reward(item_id):
+        classification = ItemClassification.useful
+        if name == ds_item_to_name[DSItem.CHAMPIONS_BADGE]:
+            classification = ItemClassification.progression
+    elif is_char_reward(item_id) or is_progressive_item_reward(item_id):
+        classification = ItemClassification.progression
+    elif is_normal_item_reward(item_id):
+        if item_id in key_item_ids:
+            classification = ItemClassification.progression
+        else:
+            classification = ItemClassification.filler
+    else:
+        raise Exception(f"Unknown item: {name}")
+
+    return Item(name, classification, item_id, player)
+
 
 def collect_item(state: CollectionState, item: Item, remove: bool=False) -> str | None:
     """

@@ -142,7 +142,7 @@ class CTRDIWorld(World):
         """
         Create an AP item from the named RDI item.
         """
-        return Items.create_ap_item(Items.item_name_to_rdi_type[name], self.player)
+        return Items.create_item_from_name(name, self.player)
 
     @typing.override
     def create_items(self) -> None:
