@@ -1,8 +1,7 @@
 #
 # Package the ctrando library for release with the apworld.
-#
-# This library package contains the ctrando code and license and should be
-# installed in the Archipelago lib folder.
+# Create a lib/ctrando folder inside the world and install
+# the necessary package files
 #
 
 # Submodule needs to be initialized to build the package
@@ -18,23 +17,19 @@ if [[ ! -e "../submodules/ctrando" ]]; then
     exit 1
 fi
 
-pushd ../submodules/ctrando/src/ctrando
-# Copy the license file here so it gets included in the package
-cp ../../LICENSE .
+# Create a lib folder in the apworld main directory
+pushd ..
+# Delete the old package if it exists
+rm -r lib/
+mkdir -p lib
 
-zip -r ctrando.zip *
-package_success=$?
+pushd lib
+# Copy the ctrando library files
+cp -r ../submodules/ctrando/src/ctrando/ .
+# Copy the license
+cp ../submodules/ctrando/LICENSE ctrando/
+# Make an __init__.py file so that python recognizes it
+touch ctrando/__init__.py
 
-if [ $package_success -ne 0 ]; then
-    # Zip failed, clean up as best we can
-    echo "Failed to create rando package"
-    rm -f ctrando.zip
-fi
-
-rm LICENSE
 popd
-
-if [ $package_success -eq 0 ]; then
-    # Move the package to the current working directory
-    mv ../submodules/ctrando/src/ctrando/ctrando.zip .
-fi
+popd

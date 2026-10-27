@@ -4,8 +4,14 @@ import base64
 import hashlib
 import logging
 import os
+import sys
 import typing
 from pathlib import Path
+
+# Add the ctrando lib to sys path
+base_path = Path(__file__).resolve().parent
+lib_path = base_path / "lib"
+sys.path.append(str(lib_path))
 
 # RDI randomizer imports
 from ctrando import randomizer
@@ -105,16 +111,19 @@ class CTRDIWorld(World):
         # Determine where the prepatch files are if we aren't running from source
         self.event_path = None
         self.prepatch_path = None
-        if self.zip_path is not None:
-            # We should be in custom_worlds, but check just in case the apworld was
-            # installed in lib/worlds.
-            parent_dir = Path(self.zip_path).parent
-            if parent_dir.name.endswith("custom_worlds"):
-                self.event_path = parent_dir.joinpath(Path("../lib/ctrando/post_config.pkl"))
-                self.prepatch_path = parent_dir.joinpath(Path("../lib/ctrando/patch.pkl"))
-            elif parent_dir.name.endswith("/lib/worlds"):
-                self.event_path = parent_dir.joinpath(Path("../ctrando/post_config.pkl"))
-                self.prepatch_path = parent_dir.joinpath(Path("../ctrando/patch.pkl"))
+        # TODO: Reimplement prepatch files
+        #       Currently disabled now that the library was moved into the apworld.
+        #       Maybe store the prepatch files in the data folder, tagged by rando commit?
+        #if self.zip_path is not None:
+        #    # We should be in custom_worlds, but check just in case the apworld was
+        #    # installed in lib/worlds.
+        #    parent_dir = Path(self.zip_path).parent
+        #    if parent_dir.name.endswith("custom_worlds"):
+        #        self.event_path = parent_dir.joinpath(Path("../lib/ctrando/post_config.pkl"))
+        #        self.prepatch_path = parent_dir.joinpath(Path("../lib/ctrando/patch.pkl"))
+        #    elif parent_dir.name.endswith("/lib/worlds"):
+        #        self.event_path = parent_dir.joinpath(Path("../ctrando/post_config.pkl"))
+        #        self.prepatch_path = parent_dir.joinpath(Path("../ctrando/patch.pkl"))
 
     @typing.override
     def generate_early(self):
@@ -128,7 +137,9 @@ class CTRDIWorld(World):
 
         # Check if the prepatched files exist.  If not, create them.
         # These will greatly speed up subsequent generation.
-        self.has_prepatch = self._check_prepatch()
+        self.has_prepatch = False
+        # TODO: Prepatch currently disabled
+        #self.has_prepatch = self._check_prepatch()
 
         self._translate_settings()
         base_rom = ctrom.CTRom.from_file(self.get_rom_path())
