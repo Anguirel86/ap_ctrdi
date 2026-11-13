@@ -42,6 +42,8 @@ rdi_logger = logging.getLogger("RDI")
 CTUSA_MD5_HASH:str = "a2bc447961e52fd2227baed164f729dc"
 RDI_NAME = "Chrono Trigger Rando-Dalton Imperial"
 
+class RDIVersionException(Exception):
+    pass
 
 @typing.final
 class CTRDIPatch(worlds.Files.APProcedurePatch):
@@ -71,6 +73,15 @@ class RDIPatchExtension(worlds.Files.APPatchExtension):
     @staticmethod
     def apply_rdi_patch(caller: CTRDIPatch, rom: bytes) -> bytes:
         patch_dict = pickle.loads(caller.get_file("patch_data.pickle"))
+
+        # make sure the host and client are using he same world version
+        patch_version = patch_dict["world_version"]
+        world_version = CTRDIWorld.world_version
+        if patch_version != world_version:
+            raise RDIVersionException(
+                f"Version mismatch. Patch was generated on {patch_version.as_simple_string()}"
+                f" but the client is running {world_version.as_simple_string()}")
+
         rng = random.Random()
         rng.seed(patch_dict["rdi_reseed"], version=2)
 
@@ -241,6 +252,7 @@ class CTRDIWorld(World):
         output_path = os.path.join(output_directory, f"{basename}{patch.patch_file_ending}")
 
         patch_data: dict = {
+            "world_version": self.world_version,
             "hashed_name": self.hashed_name,
             "settings": self.rdi_settings,
             "romless_config": self.romless_config,
