@@ -4,6 +4,8 @@ import base64
 import hashlib
 import logging
 import os
+import pickle
+import random
 import sys
 import typing
 from pathlib import Path
@@ -31,25 +33,59 @@ from Utils import read_snes_rom
 from worlds.AutoWorld import WebWorld, World
 
 # Local APWorld imports
-from . import Items, Locations
-from .Client import CTRDIClient  # noqa: F401  # pyright: ignore[reportUnusedImport]
-from .Options import CTRDIOptions, option_groups
+from . import items, locations
+from .client import CTRDIClient  # noqa: F401  # pyright: ignore[reportUnusedImport]
+from .options import CTRDIOptions, option_groups
 
 rdi_logger = logging.getLogger("RDI")
 
-CTUSA_MD5_HASH = "a2bc447961e52fd2227baed164f729dc"
+CTUSA_MD5_HASH:str = "a2bc447961e52fd2227baed164f729dc"
+RDI_NAME = "Chrono Trigger Rando-Dalton Imperial"
 
 
 @typing.final
-class CTRDIDeltaPatch(worlds.Files.APDeltaPatch):
+class CTRDIPatch(worlds.Files.APProcedurePatch):
+    """
+    Patch file definition for RDI.
+    """
     hash = CTUSA_MD5_HASH
-    game = "Chrono Trigger Rando-Dalton Imperial"
-    patch_file_ending = ".apctrdi"
+    game = RDI_NAME
+    patch_file_ending: str = ".apctrdi"
 
+    procedure:typing.ClassVar[list] = [
+        ("apply_rdi_patch", []),
+    ]
+
+    @typing.override
     @classmethod
     def get_source_data(cls) -> bytes:
         return CTRDIWorld.get_base_rom_bytes()
 
+@typing.final
+class RDIPatchExtension(worlds.Files.APPatchExtension):
+    """
+    Patch extension class to apply the RDI patch on the client machine.
+    """
+    game = RDI_NAME
+
+    @staticmethod
+    def apply_rdi_patch(caller: CTRDIPatch, rom: bytes) -> bytes:
+        patch_dict = pickle.loads(caller.get_file("patch_data.pickle"))
+        rng = random.Random()
+        rng.seed(patch_dict["rdi_reseed"], version=2)
+
+        ct_rom = ctrom.CTRom(rom)
+        config = randomizer.get_random_config(
+            patch_dict["settings"],
+            patch_dict["romless_config"],
+            ct_rom,
+            rng)
+
+        out_rom = randomizer.get_ctrom_from_config(
+            ct_rom, patch_dict["settings"], config)
+
+        multiworld.write_player_validation_data(out_rom, patch_dict["hashed_name"])
+        return bytes(out_rom.getbuffer())
 
 @typing.final
 class CTRDISettings(settings.Group):
@@ -58,7 +94,7 @@ class CTRDISettings(settings.Group):
         """File name of the CT ROM"""
         description = "Chrono Trigger (USA) ROM"
         copy_to = "Chrono Trigger (USA).sfc"
-        md5s = [CTRDIDeltaPatch.hash]  # noqa: RUF012
+        md5s = [CTRDIPatch.hash]  # noqa: RUF012  # pyright: ignore[reportAssignmentType]
 
     rom_file: RomFile = RomFile(RomFile.copy_to)
 
@@ -82,7 +118,7 @@ class CTRDIWorld(World):
     the vanilla experience as possible but offers a wide array of options
     to allow the player to tailor their play experience however they want.
     """
-    game = "Chrono Trigger Rando-Dalton Imperial"
+    game = RDI_NAME
     topology_present = True
     origin_region_name = "starting_rewards"
     options_dataclass = CTRDIOptions
@@ -92,38 +128,20 @@ class CTRDIWorld(World):
 
     web = CTRDIWebWorld()
 
-    rdi_settings: arguments.Settings  # pyright: ignore[reportUninitializedInstanceVariable]
-    config: randostate.ConfigState  # pyright: ignore[reportUninitializedInstanceVariable]
+    rdi_settings: arguments.Settings
+    romless_config: randostate.RomlessConfigState
 
-    location_name_to_id = Locations.location_name_to_id
-    item_name_to_id = Items.item_name_to_id
+    location_name_to_id = locations.location_name_to_id
+    item_name_to_id = items.item_name_to_id
 
-    hashed_name: bytes  # pyright: ignore[reportUninitializedInstanceVariable]
-    encoded_name: str  # pyright: ignore[reportUninitializedInstanceVariable]
-    ct_rom: randomizer.ctrom.CTRom  # pyright: ignore[reportUninitializedInstanceVariable]
-    has_prepatch = False
+    hashed_name: bytes
+    encoded_name: str
+    rdi_reseed: int
 
 
     def __init__(self, world: MultiWorld, player: int):
         super().__init__(world, player)
         self.ds_replacements: dict[int, int] = {}
-
-        # Determine where the prepatch files are if we aren't running from source
-        self.event_path = None
-        self.prepatch_path = None
-        # TODO: Reimplement prepatch files
-        #       Currently disabled now that the library was moved into the apworld.
-        #       Maybe store the prepatch files in the data folder, tagged by rando commit?
-        #if self.zip_path is not None:
-        #    # We should be in custom_worlds, but check just in case the apworld was
-        #    # installed in lib/worlds.
-        #    parent_dir = Path(self.zip_path).parent
-        #    if parent_dir.name.endswith("custom_worlds"):
-        #        self.event_path = parent_dir.joinpath(Path("../lib/ctrando/post_config.pkl"))
-        #        self.prepatch_path = parent_dir.joinpath(Path("../lib/ctrando/patch.pkl"))
-        #    elif parent_dir.name.endswith("/lib/worlds"):
-        #        self.event_path = parent_dir.joinpath(Path("../ctrando/post_config.pkl"))
-        #        self.prepatch_path = parent_dir.joinpath(Path("../ctrando/patch.pkl"))
 
     @typing.override
     def generate_early(self):
@@ -135,33 +153,28 @@ class CTRDIWorld(World):
         self.hashed_name = hash(player_name).to_bytes(8, signed=True)
         self.encoded_name = base64.b64encode(self.hashed_name).decode()
 
-        # Check if the prepatched files exist.  If not, create them.
-        # These will greatly speed up subsequent generation.
-        self.has_prepatch = False
-        # TODO: Prepatch currently disabled
-        #self.has_prepatch = self._check_prepatch()
-
         self._translate_settings()
-        base_rom = ctrom.CTRom.from_file(self.get_rom_path())
-        self.ct_rom = randomizer.ctrom.CTRom(base_rom.getvalue())
-        self.config = randomizer.get_random_config(
-            self.rdi_settings, self.ct_rom, self.multiworld.random)
-        self.ds_replacements = Items.get_ds_replacement_map(self.config)
+        self.romless_config = randomizer.get_random_romless_config(self.rdi_settings, self.multiworld.random)
+        self.ds_replacements = items.get_ds_replacement_map(self.romless_config)
+
+        # This value will be used to reseed the RDI random number generator for any additional
+        # randomness needed when applying the patch on the client side.
+        self.rdi_reseed = self.multiworld.random.getrandbits(64)
 
     @typing.override
     def create_item(self, name: str) -> Item:
         """
         Create an AP item from the named RDI item.
         """
-        return Items.create_item_from_name(name, self.player)
+        return items.create_item_from_name(name, self.player)
 
     @typing.override
     def create_items(self) -> None:
         """
         Create the multiworld items for this player
         """
-        items = Items.create_items(self.config, self.player, self.ds_replacements)
-        self.multiworld.itempool += items
+        self.multiworld.itempool += items.create_items(
+            self.romless_config, self.player, self.ds_replacements)
 
     @typing.override
     def create_regions(self) -> None:
@@ -169,20 +182,20 @@ class CTRDIWorld(World):
         Create regions and locations for this player
         """
         # Create regions and connecting exits
-        region_dict = Locations.create_region_map(self.config, self.multiworld, self.player)
+        region_dict = locations.create_region_map(self.romless_config, self.multiworld, self.player)
 
         # Create treasure locations and game/logic event locations
-        Locations.create_locations_for_regions(
-            region_dict, self.config, self.rdi_settings, Items.key_item_list, self.player)
-        Locations.create_recruit_events(region_dict, self.config, self.player)
-        Locations.create_flag_events(region_dict, self.config, self.player)
+        locations.create_locations_for_regions(
+            region_dict, self.romless_config, self.rdi_settings, items.key_item_list, self.player)
+        locations.create_recruit_events(region_dict, self.romless_config, self.player)
+        locations.create_flag_events(region_dict, self.romless_config, self.player)
 
         # Create victory location
         menu_region = region_dict[self.origin_region_name].ap_region
         victory_loc = Location(self.player, "Victory", None, menu_region)
         victory_loc.place_locked_item(
             Item("Victory", ItemClassification.progression, None, self.player))
-        victory_loc.access_rule = Locations.create_victory_rule(self.player, self.rdi_settings)
+        victory_loc.access_rule = locations.create_victory_rule(self.player, self.rdi_settings)
         menu_region.locations.append(victory_loc)
         self.multiworld.completion_condition[self.player] = \
             lambda state: state.has("Victory", self.player)
@@ -217,44 +230,32 @@ class CTRDIWorld(World):
     @typing.override
     def generate_output(self, output_directory: str):
         """
-        Generate the randomized ROM and create the patch file
+        Create the patch file for this game.
         """
-        # Get all items placed in this game world and write
-        # the player and item data back to the RDI config
+        # Rewrite the treasure dictionary to handle local vs AP items
         self._modify_rom_treasures()
 
-        if self.has_prepatch:
-            out_rom = randomizer.get_ctrom_from_config(
-                self.ct_rom, self.rdi_settings, self.config, self.event_path, self.prepatch_path)
-        else:
-            out_rom = randomizer.get_ctrom_from_config(
-                self.ct_rom, self.rdi_settings, self.config)
-
-        multiworld.write_player_validation_data(out_rom, self.hashed_name)
-
+        # Create the patch file with the necessary data to create the ROM
+        patch = CTRDIPatch()
         basename = self.multiworld.get_out_file_name_base(self.player)
-        output_path = os.path.join(output_directory, f"{basename}.sfc")
+        output_path = os.path.join(output_directory, f"{basename}{patch.patch_file_ending}")
 
-        with open(output_path, "wb") as file:
-            _ = file.write(out_rom.getbuffer())
-
-        patch = CTRDIDeltaPatch(
-            os.path.splitext(output_path)[0] +
-            CTRDIDeltaPatch.patch_file_ending,
-            player=self.player,
-            player_name=self.multiworld.player_name[self.player],
-            patched_path=output_path)
-
-        patch.write()  # pyright: ignore[reportUnknownMemberType]
-        os.unlink(output_path)
+        patch_data: dict = {
+            "hashed_name": self.hashed_name,
+            "settings": self.rdi_settings,
+            "romless_config": self.romless_config,
+            "rdi_reseed": self.rdi_reseed
+        }
+        patch.write_file("patch_data.pickle", pickle.dumps(patch_data))
+        patch.write(output_path)
 
     @typing.override
     def collect_item(self, state: CollectionState, item: Item, remove: bool=False) -> str | None:
-        return Items.collect_item(state, item, remove)
+        return items.collect_item(state, item, remove)
 
     def _convert_setting_value(self, flag_name: str, spec):
         """
-        Convert a value for use in an RDI settings dictionary
+        Convert a value from an AP option type for use in an RDI settings dictionary
         """
         value = getattr(self.options, flag_name)  # pyright: ignore[reportAny]
         if isinstance(value, Choice):
@@ -263,7 +264,7 @@ class CTRDIWorld(World):
             value = value.value == 1
         elif isinstance(value, Range):
             value = value.value
-            if spec.type_fn is not int:  # pyright: ignore[reportUnknownMemberType]
+            if hasattr(spec, "type_fn") and spec.type_fn is not int:
                 value = float(value / 100.0)
         elif isinstance(value, OptionList):
             value = value.value
@@ -327,7 +328,7 @@ class CTRDIWorld(World):
         import ctrando.arguments.arguments
         arg_specs = ctrando.arguments.arguments.Settings.get_argument_spec()
         spec = arg_specs["logic_options"]["excluded_spots"]  # pyright: ignore[reportIndexIssue]
-        for loc in Locations.locs_to_skip:
+        for loc in locations.locs_to_skip:
             data_dict["excluded_spots"].append(spec.str_from_choice_fn(loc))  # pyright: ignore[reportAttributeAccessIssue]
 
         # Enable multiworld support in the randomizer
@@ -358,76 +359,45 @@ class CTRDIWorld(World):
                 continue
 
             is_local = loc.item.player == self.player
-            tid = Locations.get_tid_from_address(loc.address)
+            tid = locations.get_tid_from_address(loc.address)
 
             if is_local:
                 # Replace the reward here with whatever AP chose.
-                # TODO: Char levels
-                if Items.is_tech_level_reward(loc.item.code):
-                    char_id = Items.convert_to_char_id(loc.item.code)
-                    self.config.treasure_assignment[tid] = tty.TechLevelReward(char_id)
+                # TODO: Character items (not implmenented in base randomizer yet)
+                if items.is_tech_level_reward(loc.item.code):
+                    char_id = items.convert_to_char_id(loc.item.code)
+                    self.romless_config.treasure_assignment[tid] = tty.TechLevelReward(char_id)
                 else:
 
-                    if Items.is_ds_item_reward(loc.item.code):
+                    if items.is_ds_item_reward(loc.item.code):
                         # Convert from the DS item to the base item it replaced
-                        item_id = ItemID(self.ds_replacements[loc.item.code] - Items.ITEM_ID_BASE)
-                    elif Items.is_progressive_item_reward(loc.item.code):
+                        item_id = ItemID(self.ds_replacements[loc.item.code] - items.ITEM_ID_BASE)
+                    elif items.is_progressive_item_reward(loc.item.code):
                         # Replace progressive items with their base item and let
                         # the ROM side handle the upgrade.
-                        item_id = Items.get_base_progressive_item(loc.item.code)
+                        item_id = items.get_base_progressive_item(loc.item.code)
                     else:
-                        item_id = Items.item_name_to_rdi_type[loc.item.name]
+                        item_id = items.item_name_to_rdi_type[loc.item.name]
 
 
-                    self.config.treasure_assignment[tid] = item_id
+                    self.romless_config.treasure_assignment[tid] = item_id
             else:
                 # Replace reward here with the AP treasure type
                 item_name = ctstrings.pre_process_string(loc.item.name)
                 player_name = ctstrings.pre_process_string(self.multiworld.player_name[loc.item.player])
-                self.config.treasure_assignment[tid] = tty.APReward(item_name, player_name)
-
-    def _check_prepatch(self):
-        """
-        Check for the presence of prepatch files and create them if necessary.
-
-        RDI allows the use of prepatched event/patch data to speed up subsequent
-        generation attempts. These allow the randomizer to more quickly apply the
-        pre-randomization patches/updates.
-
-        Store the prepatch files with the randomizer library. This way the user will
-        have to regenerate prepatch files any time they update, ensuring that they
-        are kept in sync.
-        """
-        if self.event_path is None or self.prepatch_path is None:
-            return False
-
-        # Check if the event and prepatch files exist
-        if not os.path.isfile(self.event_path) or not os.path.isfile(self.prepatch_path):
-            # one or both files don't exist.  Generate them.
-            # make sure the directory exists
-            prepatch_dir = self.event_path.parent
-            os.makedirs(prepatch_dir, exist_ok=True)
-
-            rdi_logger.info(f"Generating RDI prepatch files in {prepatch_dir}")
-            base_rom = ctrom.CTRom.from_file(self.get_rom_path())
-            randomizer.dump_openworld_post_config(base_rom, self.event_path)
-            randomizer.dump_prepatched_ctrom(vanilla_rom=base_rom, dump_path=self.prepatch_path)
-
-        return True
-
+                self.romless_config.treasure_assignment[tid] = tty.APReward(item_name, player_name)
 
     @staticmethod
     def get_rom_path() -> str:
         """
         Get the path to the Chrono Trigger ROM
         """
-        file_name = CTRDIWorld.settings.rom_file  # pyright: ignore[reportAny]
+        file_name = CTRDIWorld.settings.rom_file
 
-        if not os.path.exists(file_name):  # pyright: ignore[reportAny]
-            # TODO: Refine error text
+        if not os.path.exists(file_name):
             raise ValueError("No Chrono Trigger ROM specified")
 
-        return file_name  # pyright: ignore[reportAny]
+        return file_name
 
     @staticmethod
     def get_base_rom_bytes(file_name: str = "") -> bytes:
@@ -443,7 +413,7 @@ class CTRDIWorld(World):
             basemd5 = hashlib.md5()
             basemd5.update(base_rom_bytes)
             if basemd5.hexdigest() != CTUSA_MD5_HASH:
-                raise Exception(
+                raise ValueError(
                     "Supplied base ROM does not match the known MD5 hash")
 
             CTRDIWorld.get_base_rom_bytes.base_rom_bytes = base_rom_bytes  # pyright: ignore[reportFunctionMemberAccess]

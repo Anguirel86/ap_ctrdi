@@ -32,16 +32,24 @@ class {get_class_name(flag)}(Toggle):
     _ = option_class_buf.write(control)
 
 
-def write_range_control(flag: str, spec: argumenttypes.DiscreteNumericalArg[int|float]):
+def write_range_control(flag: str, spec: argumenttypes.DiscreteNumericalArg[int|float] | argumenttypes.RandomFlagArg):
     """
     Handle writing the range class controls.
     Ranges are numeric options with a min/max value.
 
     AP does not support floating point types in ranges, so we'll have to
     get a bit creative to scale them to appropriate integer values.
+
+    This also handles the RandomFlagArg, which is a special numeric type that
+    ranges from 0-100, but also supports false/true for min/max values.  For the
+    purpose of AP, we will limit it to a standard range type.
     """
 
-    if spec.type_fn is not int:
+    if isinstance(spec, argumenttypes.RandomFlagArg):
+        min_val = 0
+        max_val = 100
+        default_val = spec.default_value
+    elif spec.type_fn is not int:
         # AP ranges don't support floats
         # Most of the float based options are percentages. For now, naievely scale
         # the values by 100 and then scale them back during generation.
@@ -132,9 +140,8 @@ def write_list_control(flag: str, spec: argumenttypes.MultipleDiscreteSelection)
         name = spec.str_from_choice_fn(elem)  # pyright: ignore[reportOptionalCall]
         default_list.append(name)
 
-    valid_keys = []
-    for key in spec.choices:
-        valid_keys.append(spec.str_from_choice_fn(key))
+    str_from_choice_fn = spec.str_from_choice_fn if spec.str_from_choice_fn else str
+    valid_keys = [str_from_choice_fn(key) for key in spec.choices]
 
     default_list_as_str: str = f"[{', '.join(repr(i) for i in default_list)}]"
     valid_keys_as_str: str = f"{{{', '.join(repr(i) for i in valid_keys)}}}"
@@ -153,9 +160,10 @@ def parse_option_group(group_name: str, arg_spec: dict):
     if group_name not in group_name_list:
         if group_name_list:
             # Close out the previous group
-            _ = option_groups_buf.write("""
-        ]
+            _ = option_groups_buf.write("""        ]
     ),\n""")
+
+        # Start the new option group
         _ = option_groups_buf.write(f"""
     OptionGroup(
         "{get_display_name(group_name)}",
@@ -170,12 +178,13 @@ def parse_option_group(group_name: str, arg_spec: dict):
             # Recursive arg specs
             parse_option_group(group_name, spec)
         else:
-            #if not isinstance(spec, argumenttypes.MultipleDiscreteSelection):
             _ = dataclass_buf.write(f"    {flag}: {get_class_name(flag)}\n")
             _ = option_groups_buf.write(f"            {get_class_name(flag)},\n")
 
         if isinstance(spec, argumenttypes.FlagArg):
             write_toggle_control(flag, spec)
+        if isinstance(spec, argumenttypes.RandomFlagArg):
+            write_range_control(flag, spec)
         elif isinstance(spec, argumenttypes.DiscreteNumericalArg):
             write_range_control(flag, spec)
         elif isinstance(spec, argumenttypes.DiscreteCategorialArg):
@@ -208,8 +217,7 @@ option_groups: list[OptionGroup] = [\n""")
         parse_option_group(section_name, arg_spec)  # pyright: ignore[reportArgumentType]
 
     # Close out the last option group
-    _ = option_groups_buf.write("""
-        ]
+    _ = option_groups_buf.write("""        ]
     )
 ]
 """)
@@ -218,7 +226,7 @@ option_groups: list[OptionGroup] = [\n""")
     _ = option_class_buf.seek(0)
     _ = dataclass_buf.seek(0)
     _ = option_groups_buf.seek(0)
-    with open("Options.py", "w") as file:
+    with open("options.py", "w") as file:
         _ = file.write(option_class_buf.read())
         _ = file.write(dataclass_buf.read())
         _ = file.write(option_groups_buf.read())

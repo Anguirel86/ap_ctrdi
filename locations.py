@@ -6,14 +6,6 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from BaseClasses import (
-    CollectionState,
-    Item,
-    ItemClassification,
-    Location,
-    MultiWorld,
-    Region,
-)
 from ctrando.arguments import arguments
 from ctrando.bosses.bosstypes import BossSpotID
 from ctrando.common import memory, randostate
@@ -23,6 +15,15 @@ from ctrando.entranceshuffler.owregions import OWRegion
 from ctrando.entranceshuffler.regionmap import ExitConnector, RegionConnector
 from ctrando.logic import logictypes
 from ctrando.treasures import treasuretypes as tty
+
+from BaseClasses import (
+    CollectionState,
+    Item,
+    ItemClassification,
+    Location,
+    MultiWorld,
+    Region,
+)
 
 
 class RDILocationException(Exception):
@@ -131,7 +132,7 @@ def create_victory_rule(player: int, rdi_settings: arguments.Settings) -> Callab
 
 def create_flag_events(
     region_dict: dict[str, RegionData],
-    config: randostate.ConfigState,
+    config: randostate.RomlessConfigState,
     player: int
 ):
     """
@@ -158,7 +159,7 @@ def create_flag_events(
 
 def create_recruit_events(
     region_dict: dict[str, RegionData],
-    config: randostate.ConfigState,
+    config: randostate.RomlessConfigState,
     player: int
 ):
     """
@@ -176,7 +177,7 @@ def create_recruit_events(
 
 def create_locations_for_regions(
     region_dict: dict[str, RegionData],
-    config: randostate.ConfigState,
+    config: randostate.RomlessConfigState,
     rdi_settings: arguments.Settings,
     key_item_list: list[ItemID],
     player: int):
@@ -202,7 +203,7 @@ def create_locations_for_regions(
                 continue
 
             for loc in region_data.rdi_region.reward_spots:
-                if isinstance(loc, TreasureID) and not loc in locs_to_skip:
+                if isinstance(loc, TreasureID) and loc not in locs_to_skip:
                     treasure = config.treasure_assignment[loc]
                     if treasure in key_item_list:
                         chosen_spots.append(loc)
@@ -265,7 +266,7 @@ def create_locations_for_regions(
                     location.item_rule = junk_only
 
 def create_region_map(
-    config: randostate.ConfigState,
+    config: randostate.RomlessConfigState,
     multiworld: MultiWorld,
     player: int) -> dict[str, RegionData]:
     """

@@ -1125,8 +1125,8 @@ class VanillaBossSpots(OptionList):
 class BossPool(OptionList):
     """Bosses to include in assignment (only when boss type is "random")"""
     display_name = "Boss Pool"
-    valid_keys = {'dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape'}
-    default = ['dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape']
+    valid_keys = {'dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape', 'ozzie_trio'}
+    default = ['dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash_sword', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_north_cape', 'ozzie_trio']
 
 
 class MidbossPool(OptionList):
@@ -1139,7 +1139,7 @@ class MidbossPool(OptionList):
 class LavosGauntletBosses(OptionList):
     """Bosses to fight in the Lavos gauntlet (max 9)"""
     display_name = "Lavos Gauntlet Bosses"
-    valid_keys = {'dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_nc', 'black_tyrano', 'magus', 'zeal2', 'mammon_machine'}
+    valid_keys = {'dalton_plus', 'flea', 'golem', 'golem_boss', 'heckran', 'masa_mune', 'nizbel', 'nizbel_2', 'rust_tyrano', 'slash', 'yakra', 'yakra_xiii', 'zombor', 'lavos_spawn', 'elder_spawn', 'mega_mutant', 'giga_mutant', 'terra_mutant', 'retinite', 'son_of_sun', 'mother_brain', 'guardian', 'giga_gaia', 'mud_imp', 'r_series', 'dragon_tank', 'zeal', 'magus_nc', 'ozzie_trio', 'black_tyrano', 'magus', 'zeal2', 'mammon_machine'}
     default = ['dragon_tank', 'guardian', 'heckran', 'zombor', 'masa_mune', 'nizbel', 'magus', 'black_tyrano', 'giga_gaia']
 
 
@@ -2871,6 +2871,16 @@ class AltLightning2(Choice):
     default = 0
 
 
+class CharacterPaletteReassignScheme(Choice):
+    """How to modify palettes when character identities are randomized"""
+    display_name = "Character Palette Reassign Scheme"
+
+    option_use_base = 0
+    option_use_reassign = 1
+    option_transfer_base = 2
+    default = 2
+
+
 class DsItemPool(OptionList):
     """DS Items which may appear"""
     display_name = "Ds Item Pool"
@@ -3337,39 +3347,60 @@ class RandomWeaponStatBoostSpec8(FreeText):
     default = ""
 
 
-class UsePhysMarle(Toggle):
+class UsePhysMarle(Range):
     """+Hit, Physical arrow tech"""
     display_name = "Use Phys Marle"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
-class UseHasteAll(Toggle):
+class UseHasteAll(Range):
     """AoE Haste, 15 MP cost"""
     display_name = "Use Haste All"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
-class UsePhysLucca(Toggle):
+class UsePhysLucca(Range):
     """+Hit. Physical Flame Toss + Bombs"""
     display_name = "Use Phys Lucca"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
-class UseProtectAll(Toggle):
+class UseProtectAll(Range):
     """AoE Protect, 2x MP cost"""
     display_name = "Use Protect All"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
-class UseReraise(Toggle):
+class UseReraise(Range):
     """Life2 gives greendream effect"""
     display_name = "Use Reraise"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
-class UseMagusDualTechs(Toggle):
+class UseMagusDualTechs(Range):
     """Magus can perform dual techs with fire/ice/lit2"""
     display_name = "Use Magus Dual Techs"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
-class UseDaltonizedMagus(Toggle):
+class UseDaltonizedMagus(Range):
     """Magus shadow techs are replaced with Dalton versions"""
     display_name = "Use Daltonized Magus"
+    range_start = 0
+    range_end = 100
+    default = 0
 
 
 class TechRandoScheme(Choice):
@@ -3405,6 +3436,73 @@ class MdefLevelupCap(Range):
     range_start = 1
     range_end = 99
     default = 99
+
+
+class CharacterIdentityRandomization(Choice):
+    """How character identities should be assigned"""
+    display_name = "Character Identity Randomization"
+
+    option_vanilla = 0
+    option_rdi_random = 1
+    option_shuffle = 2
+    default = 0
+
+
+class CharacterReassignKeepStats(Range):
+    """When randomizing characters, don't change stats"""
+    display_name = "Character Reassign Keep Stats"
+    range_start = 0
+    range_end = 100
+    default = 0
+
+
+class CronoIdentityChoices(OptionList):
+    """Possible character assignments for Crono"""
+    display_name = "Crono Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
+
+
+class MarleIdentityChoices(OptionList):
+    """Possible character assignments for Marle"""
+    display_name = "Marle Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
+
+
+class LuccaIdentityChoices(OptionList):
+    """Possible character assignments for Lucca"""
+    display_name = "Lucca Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
+
+
+class RoboIdentityChoices(OptionList):
+    """Possible character assignments for Robo"""
+    display_name = "Robo Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
+
+
+class FrogIdentityChoices(OptionList):
+    """Possible character assignments for Frog"""
+    display_name = "Frog Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
+
+
+class AylaIdentityChoices(OptionList):
+    """Possible character assignments for Ayla"""
+    display_name = "Ayla Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
+
+
+class MagusIdentityChoices(OptionList):
+    """Possible character assignments for Magus"""
+    display_name = "Magus Identity Choices"
+    valid_keys = {'crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus'}
+    default = ['crono', 'marle', 'lucca', 'robo', 'frog', 'ayla', 'magus']
 
 
 class DaltonLevel(Range):
@@ -4619,6 +4717,7 @@ class CTRDIOptions(PerGameCommonOptions):
     ending: Ending
     remove_flashes: RemoveFlashes
     alt_lightning2: AltLightning2
+    character_palette_reassign_scheme: CharacterPaletteReassignScheme
     ds_item_pool: DsItemPool
     ds_replacement_chance: DsReplacementChance
     bronze_fist_policy: BronzeFistPolicy
@@ -4689,6 +4788,15 @@ class CTRDIOptions(PerGameCommonOptions):
     mdef_growth_scale_factor: MdefGrowthScaleFactor
     mdef_cap: MdefCap
     mdef_levelup_cap: MdefLevelupCap
+    character_identity_randomization: CharacterIdentityRandomization
+    character_reassign_keep_stats: CharacterReassignKeepStats
+    crono_identity_choices: CronoIdentityChoices
+    marle_identity_choices: MarleIdentityChoices
+    lucca_identity_choices: LuccaIdentityChoices
+    robo_identity_choices: RoboIdentityChoices
+    frog_identity_choices: FrogIdentityChoices
+    ayla_identity_choices: AylaIdentityChoices
+    magus_identity_choices: MagusIdentityChoices
     dalton_level: DaltonLevel
     dalton_plus_level: DaltonPlusLevel
     elder_spawn_level: ElderSpawnLevel
@@ -4853,7 +4961,6 @@ option_groups: list[OptionGroup] = [
             CustomCharmEnemyPool4,
             CustomCharmRewardPool4,
             MarkCharmableEnemies,
-
         ]
     ),
 
@@ -4871,7 +4978,6 @@ option_groups: list[OptionGroup] = [
             BalanceTechMps,
             CustomDamageMps,
             NormalizeTechs,
-
         ]
     ),
 
@@ -4933,7 +5039,6 @@ option_groups: list[OptionGroup] = [
             EnhasaMod,
             OceanPalaceMod,
             MtWoeMod,
-
         ]
     ),
 
@@ -4961,7 +5066,6 @@ option_groups: list[OptionGroup] = [
             ForceEarlyFlight,
             MagusSequenceBreakOceanPalace,
             MagusLogicalMagusCastle,
-
         ]
     ),
 
@@ -4975,7 +5079,6 @@ option_groups: list[OptionGroup] = [
             MidbossPool,
             LavosGauntletBosses,
             LavosGauntletRewards,
-
         ]
     ),
 
@@ -4993,7 +5096,6 @@ option_groups: list[OptionGroup] = [
             GuaranteedShopItems,
             CustomShopItemSpec,
             ShowAllCharsInShop,
-
         ]
     ),
 
@@ -5014,7 +5116,6 @@ option_groups: list[OptionGroup] = [
             Objective6,
             Objective7,
             Objective8,
-
         ]
     ),
 
@@ -5032,7 +5133,6 @@ option_groups: list[OptionGroup] = [
             PreserveSpots2,
             PreserveSpots3,
             PreserveSpots4,
-
         ]
     ),
 
@@ -5065,7 +5165,6 @@ option_groups: list[OptionGroup] = [
             ScaleLevelToLeader,
             ScaleTechlevelToLeader,
             ScaleGear,
-
         ]
     ),
 
@@ -5119,7 +5218,6 @@ option_groups: list[OptionGroup] = [
             GoodLoot8,
             GoodLootSpots8,
             GoodLootRate8,
-
         ]
     ),
 
@@ -5130,7 +5228,6 @@ option_groups: list[OptionGroup] = [
             ForcedSightscope,
             ShuffleEnemies,
             NormalizeEnemies,
-
         ]
     ),
 
@@ -5157,7 +5254,7 @@ option_groups: list[OptionGroup] = [
             Ending,
             RemoveFlashes,
             AltLightning2,
-
+            CharacterPaletteReassignScheme,
         ]
     ),
 
@@ -5223,7 +5320,6 @@ option_groups: list[OptionGroup] = [
             ForcedWeaponStatBoosts8,
             RandomWeaponEffectSpec8,
             RandomWeaponStatBoostSpec8,
-
         ]
     ),
 
@@ -5241,7 +5337,15 @@ option_groups: list[OptionGroup] = [
             MdefGrowthScaleFactor,
             MdefCap,
             MdefLevelupCap,
-
+            CharacterIdentityRandomization,
+            CharacterReassignKeepStats,
+            CronoIdentityChoices,
+            MarleIdentityChoices,
+            LuccaIdentityChoices,
+            RoboIdentityChoices,
+            FrogIdentityChoices,
+            AylaIdentityChoices,
+            MagusIdentityChoices,
         ]
     ),
 
@@ -5285,7 +5389,6 @@ option_groups: list[OptionGroup] = [
             KrawlieLevel,
             GatoLevel,
             Zeal2Level,
-
         ]
     ),
 
@@ -5303,7 +5406,6 @@ option_groups: list[OptionGroup] = [
             PlandoRecruitDeathPeak,
             PlandoRecruitNorthCape,
             PlandoRecruitYakraBox,
-
         ]
     ),
 
@@ -5367,7 +5469,6 @@ option_groups: list[OptionGroup] = [
             FrogCanEquipPercent,
             AylaCanEquipPercent,
             MagusCanEquipPercent,
-
         ]
     )
 ]

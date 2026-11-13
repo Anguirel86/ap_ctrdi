@@ -12,7 +12,7 @@ from ctrando.entranceshuffler import entrancefiller
 
 from BaseClasses import CollectionState, Item, ItemClassification
 
-from .Locations import locs_to_skip
+from .locations import locs_to_skip
 
 """Offset to give CTRDI items a unique item range in AP"""
 ITEM_ID_BASE = 50_350_000
@@ -190,74 +190,23 @@ def convert_to_char_id(item_id: int) -> CharID:
     char_id_list = list(CharID)
     return char_id_list[char_id]
 
-def get_ds_replacement_map(config: randostate.ConfigState) -> dict[int, int]:
+def get_ds_replacement_map(romless_config: randostate.RomlessConfigState) -> dict[int, int]:
     """
     Create a dictionary mapping DS items to the base items that they replace
     """
     ds_map: dict[int, int] = {}
 
-    good_armors = [
-        ItemID.RUBY_ARMOR, ItemID.RED_MAIL, ItemID.BLACK_MAIL,
-        ItemID.BLUE_MAIL, ItemID.WHITE_MAIL,
-    ]
-    good_helms = [
-        ItemID.RBOW_HELM, ItemID.DARK_HELM, ItemID.MERMAIDCAP,
-        ItemID.SIGHT_CAP, ItemID.MEMORY_CAP, ItemID.TIME_HAT
-    ]
-
-    def check_item(item: ItemID, ds_item: DSItem):
-        """ Check if a single item has been replaced with a DS version"""
-        ds_item_name = ds_item_to_name[ds_item]
-        if config.item_db[item].get_name_as_str(True) == ds_item_name:
-            # Map the AP item id of the DS item to the base item it is replacing
-            ds_map[item_name_to_id[ds_item_name]] = int(item) + ITEM_ID_BASE
-
-    def check_item_list(items: list[ItemID], ds_items: list[DSItem]):
-        """Check if a list of items has been replaced with one of a list of DS versions"""
-        for item in items:
-            for ds_item in ds_items:
-                check_item(item, ds_item)
-
-    # Weapons
-    check_item(ItemID.RAINBOW, DSItem.DREAMSEEKER)
-    check_item(ItemID.VALKERYE, DSItem.VENUS_BOW)
-    check_item(ItemID.WONDERSHOT, DSItem.SPELLSLINGER)
-    check_item(ItemID.WONDERSHOT, DSItem.TURBOSHOT)
-    check_item(ItemID.CRISIS_ARM, DSItem.APOCALYPSE_ARM)
-    check_item(ItemID.CRISIS_ARM, DSItem.DRAGON_ARM)
-    check_item(ItemID.DOOMSICKLE, DSItem.JUDGEMENT_SCYTHE)
-    check_item(ItemID.DOOMSICKLE, DSItem.DREAMREAPER)
-    check_item(ItemID.DEMON_HIT, DSItem.DINOBLADE)
-
-    # Armors
-    check_item(ItemID.GLOOM_CAPE, DSItem.SHADOWPLUME_ROBE)
-    check_item(ItemID.MOON_ARMOR, DSItem.REGAL_PLATE)
-    check_item(ItemID.PRISMDRESS, DSItem.REGAL_GOWN)
-    check_item(ItemID.NOVA_ARMOR, DSItem.DRAGON_ARMOR)
-    check_item(ItemID.ZODIACCAPE, DSItem.REPTITE_DRESS)
-    check_item(ItemID.TABAN_SUIT, DSItem.ELEMENTAL_AEGIS)
-    # Saurian Leathers can replace one of several armors
-    check_item_list(good_armors, [DSItem.SAURIAN_LEATHERS])
-
-    # Helmets
-    check_item(ItemID.PRISM_HELM, DSItem.MASTERS_CROWN)
-    check_item(ItemID.HASTE_HELM, DSItem.ANGELS_TIARA)
-    # These helmets randomly replace another good helmet
-    check_item_list(good_helms, [DSItem.DRAGONHEAD, DSItem.REPTITE_TIARA])
-
-    # Accessories
-    check_item(ItemID.HERO_MEDAL, DSItem.CHAMPIONS_BADGE)
-    # NOTE: Valor Crest and Dragon's Tear don't replace existing items.
-    #       Valor Crest takes over the unused Relic ID (0xB8)
-    #       Dragon's Tear takes over the unused Seraph Song ID (0xB9)
+    for base_item, ds_item in romless_config.ds_assignment.items():
+        ds_item_id = item_name_to_id[ds_item_to_name[ds_item]]
+        base_item_id = base_item + ITEM_ID_BASE
+        ds_map[ds_item_id] = base_item_id
 
     return ds_map
 
-def create_items(config: randostate.ConfigState, player: int, ds_replacements: dict[int, int]) -> list[Item]:
+def create_items(config: randostate.RomlessConfigState, player: int, ds_replacements: dict[int, int]) -> list[Item]:
     """
     Return a list of all possible items
     """
-
     # ds_replacements maps DS items to the items they replace.  We need the
     # inverse of that here so that we can initially create the DS items based
     # on the items thaat they are replacing.
@@ -361,8 +310,6 @@ def collect_item(state: CollectionState, item: Item, remove: bool=False) -> str 
     """
 
     def handle_progressive_item(prog1: ItemID, prog2: ItemID) -> str | None:
-        # NOTE: I'm not entirely sure what the remove arg is for, but I'm
-        #       basically just doing what ALttP does.
         if state.has(str(prog2), item.player):
             # Currently at stage 2
             return str(prog2) if remove else None

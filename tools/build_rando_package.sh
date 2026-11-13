@@ -11,7 +11,7 @@ if git submodule status | grep "ctrando" | grep --quiet "^-"; then
 fi
 
 # Script expects to be run from the tools directory
-# We could be smarter about this, but probbaly not worth the effort
+# We could be smarter about this, but probably not worth the effort
 if [[ ! -e "../submodules/ctrando" ]]; then
     echo "Run this script from the tools directory"
     exit 1

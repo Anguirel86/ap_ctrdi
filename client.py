@@ -10,7 +10,7 @@ from ctrando.treasures import treasuretypes
 from NetUtils import ClientStatus, NetworkItem
 from worlds.AutoSNIClient import SNIClient
 
-from . import Items, Locations
+from . import items, locations
 
 snes_logger = logging.getLogger("SNES")
 client_logger = logging.getLogger("Client")
@@ -191,7 +191,7 @@ class CTRDIClient(SNIClient):
     """
 
     game = "Chrono Trigger Rando-Dalton Imperial"
-    patch_suffix = [".apctrdi"]
+    patch_suffix: typing.ClassVar = [".apctrdi"]
 
     def __init__(self):
         super().__init__()
@@ -288,7 +288,7 @@ class CTRDIClient(SNIClient):
         new_locations: list[int] = []
         for loc, treasure in treasuretypes.get_base_treasure_dict().items():
             loc_id = self._loc_name_to_id[str(loc)]
-            if Locations.loc_id_to_tid[loc_id] in Locations.locs_to_skip:
+            if locations.loc_id_to_tid[loc_id] in locations.locs_to_skip:
                 continue
             if loc_id not in ctx.checked_locations and loc_id not in new_locations:
                 if isinstance(treasure, treasuretypes.ChestTreasure):
@@ -354,30 +354,30 @@ class CTRDIClient(SNIClient):
         0x00nn - Ignored/no-op
         """
 
-        if Items.is_normal_item_reward(item_id):
-            base_item = item_id - Items.ITEM_ID_BASE
+        if items.is_normal_item_reward(item_id):
+            base_item = item_id - items.ITEM_ID_BASE
             return (0x2000 | base_item)
 
-        if Items.is_char_reward(item_id):
-            char_id = int(Items.convert_to_char_id(item_id))
+        if items.is_char_reward(item_id):
+            char_id = int(items.convert_to_char_id(item_id))
             return (0x8000 | char_id)
 
-        if Items.is_tech_level_reward(item_id):
-            char_id = int(Items.convert_to_char_id(item_id))
+        if items.is_tech_level_reward(item_id):
+            char_id = int(items.convert_to_char_id(item_id))
             return (0x4000 | char_id)
 
-        if Items.is_ds_item_reward(item_id):
+        if items.is_ds_item_reward(item_id):
             # Get the ID of the item that this DS item replaced
             if str(item_id) in self.slot_data["ds_replacements"]:
                 replaced_item: int = int(self.slot_data["ds_replacements"][str(item_id)])
-                replaced_item = replaced_item - Items.ITEM_ID_BASE
+                replaced_item = replaced_item - items.ITEM_ID_BASE
                 return (0x2000 | replaced_item)
             raise Exception(f"DS replacement item not registered: {item_id}")
 
-        if Items.is_progressive_item_reward(item_id):
+        if items.is_progressive_item_reward(item_id):
             # Always deliver the base version of progressive items
             # The game will handle upgrading if necessary
-            base_item = int(Items.get_base_progressive_item(item_id))
+            base_item = int(items.get_base_progressive_item(item_id))
             return (0x2000 | base_item)
 
         raise Exception(f"Unknown item ID {item_id}")
@@ -417,7 +417,7 @@ class CTRDIClient(SNIClient):
 
         # Print a message to the client console since we don't do
         # in-game text boxes for item delivery.
-        name = Items.id_to_item_name[ap_item.item]
+        name = items.id_to_item_name[ap_item.item]
         player = ctx.player_names[ap_item.player]
         client_logger.info(f"Received {name} from {player}")
 
