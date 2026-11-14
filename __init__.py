@@ -53,6 +53,7 @@ class CTRDIPatch(worlds.Files.APProcedurePatch):
     hash = CTUSA_MD5_HASH
     game = RDI_NAME
     patch_file_ending: str = ".apctrdi"
+    result_file_ending: str = ".sfc"
 
     procedure:typing.ClassVar[list] = [
         ("apply_rdi_patch", []),
@@ -247,7 +248,7 @@ class CTRDIWorld(World):
         self._modify_rom_treasures()
 
         # Create the patch file with the necessary data to create the ROM
-        patch = CTRDIPatch()
+        patch = CTRDIPatch(player=self.player, player_name=self.player_name)
         basename = self.multiworld.get_out_file_name_base(self.player)
         output_path = os.path.join(output_directory, f"{basename}{patch.patch_file_ending}")
 
